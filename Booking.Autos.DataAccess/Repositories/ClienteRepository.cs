@@ -1,0 +1,133 @@
+﻿using Booking.Autos.DataAccess.Context;
+using Booking.Autos.DataAccess.Entities;
+using Booking.Autos.DataAccess.Repositories.Interfaces;
+using Microsoft.EntityFrameworkCore;
+
+namespace Booking.Autos.DataAccess.Repositories
+{
+    public class ClienteRepository : IClienteRepository
+    {
+        private readonly BookingAutoDbContext _context;
+
+        public ClienteRepository(BookingAutoDbContext context)
+        {
+            _context = context;
+        }
+
+        // =========================
+        // CONSULTAS
+        // =========================
+
+        public async Task<IEnumerable<ClienteEntity>> GetAllAsync(CancellationToken cancellationToken = default)
+        {
+            return await _context.Clientes
+                .AsNoTracking()
+                .Where(x => !x.es_eliminado)
+                .OrderBy(x => x.id_cliente)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<ClienteEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+        {
+            return await _context.Clientes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.id_cliente == id && !x.es_eliminado, cancellationToken);
+        }
+
+        public async Task<ClienteEntity?> GetByGuidAsync(Guid guid, CancellationToken cancellationToken = default)
+        {
+            return await _context.Clientes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.cliente_guid == guid && !x.es_eliminado, cancellationToken);
+        }
+
+        public async Task<ClienteEntity?> GetByIdentificacionAsync(string identificacion, CancellationToken cancellationToken = default)
+        {
+            return await _context.Clientes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.cli_ruc_ced == identificacion && !x.es_eliminado, cancellationToken);
+        }
+
+        public async Task<ClienteEntity?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
+        {
+            return await _context.Clientes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.cli_email == email && !x.es_eliminado, cancellationToken);
+        }
+
+        // =========================
+        // ESCRITURA
+        // =========================
+
+        public async Task AddAsync(ClienteEntity cliente, CancellationToken cancellationToken = default)
+        {
+            cliente.fecha_registro_utc = DateTime.UtcNow;
+            cliente.es_eliminado = false;
+
+            await _context.Clientes.AddAsync(cliente, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
+        public async Task UpdateAsync(ClienteEntity cliente, CancellationToken cancellationToken = default)
+        {
+            var existing = await _context.Clientes
+                .FirstOrDefaultAsync(x => x.id_cliente == cliente.id_cliente && !x.es_eliminado, cancellationToken);
+
+            if (existing == null)
+                return;
+
+            existing.cli_nombre = cliente.cli_nombre;
+            existing.cli_apellido = cliente.cli_apellido;
+            existing.razon_social = cliente.razon_social;
+
+            existing.tipo_identificacion = cliente.tipo_identificacion;
+            existing.cli_ruc_ced = cliente.cli_ruc_ced;
+
+            existing.id_ciudad = cliente.id_ciudad;
+
+            existing.cli_direccion = cliente.cli_direccion;
+            existing.cli_genero = cliente.cli_genero;
+
+            existing.cli_telefono = cliente.cli_telefono;
+            existing.cli_email = cliente.cli_email;
+
+            existing.cli_estado = cliente.cli_estado;
+
+            existing.modificado_por_usuario = cliente.modificado_por_usuario;
+            existing.fecha_modificacion_utc = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
+        public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
+        {
+            var cliente = await _context.Clientes
+                .FirstOrDefaultAsync(x => x.id_cliente == id && !x.es_eliminado, cancellationToken);
+
+            if (cliente == null)
+                return;
+
+            cliente.es_eliminado = true;
+            cliente.fecha_eliminacion = DateTime.UtcNow;
+            cliente.fecha_modificacion_utc = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
+        // =========================
+        // VALIDACIONES
+        // =========================
+
+        public async Task<bool> ExistsByIdentificacionAsync(string identificacion, CancellationToken cancellationToken = default)
+        {
+            return await _context.Clientes
+                .AnyAsync(x => x.cli_ruc_ced == identificacion && !x.es_eliminado, cancellationToken);
+        }
+
+        public async Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default)
+        {
+            return await _context.Clientes
+                .AnyAsync(x => x.cli_email == email && !x.es_eliminado, cancellationToken);
+        }
+    }
+}
