@@ -10,7 +10,10 @@ namespace Booking.Autos.DataManagement.Interfaces
         // CONSULTAS
         // =========================
 
-        Task<DataPagedResult<ReservaDataModel>> GetAllAsync(
+        Task<IReadOnlyList<ReservaDataModel>> GetAllAsync(
+            CancellationToken cancellationToken = default);
+
+        Task<DataPagedResult<ReservaDataModel>> BuscarAsync(
             ReservaFiltroDataModel filtro,
             CancellationToken cancellationToken = default);
 

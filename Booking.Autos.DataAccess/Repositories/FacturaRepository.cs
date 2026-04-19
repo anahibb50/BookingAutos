@@ -87,6 +87,29 @@ namespace Booking.Autos.DataAccess.Repositories
             await _context.SaveChangesAsync(cancellationToken);
         }
 
+        public async Task UpdateAsync(FacturaEntity factura, CancellationToken cancellationToken = default)
+        {
+            var existing = await _context.Facturas
+                .FirstOrDefaultAsync(x => x.id_factura == factura.id_factura && !x.es_eliminado, cancellationToken);
+
+            if (existing == null)
+                throw new Exception("Factura no encontrada");
+
+            // 🔥 campos editables
+            existing.fac_descripcion = factura.fac_descripcion;
+            existing.origen_factura = factura.origen_factura;
+
+            existing.fac_subtotal = factura.fac_subtotal;
+            existing.fac_iva = factura.fac_iva;
+            existing.fac_total = factura.fac_total;
+            existing.id_cliente = factura.id_cliente;
+            existing.id_reserva = factura.id_reserva;
+
+            existing.fecha_actualizacion = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+
         // =========================
         // CASOS DE USO (NEGOCIO)
         // =========================

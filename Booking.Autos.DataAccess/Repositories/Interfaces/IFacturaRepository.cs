@@ -32,6 +32,8 @@ namespace Booking.Autos.DataAccess.Repositories.Interfaces
 
         Task AddAsync(FacturaEntity factura, CancellationToken cancellationToken = default);
 
+        Task UpdateAsync(FacturaEntity factura, CancellationToken cancellationToken = default);
+
         // =========================
         // CASOS DE USO (NEGOCIO)
         // =========================

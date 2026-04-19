@@ -11,9 +11,6 @@ namespace Booking.Autos.DataManagement.Interfaces
         Task<IEnumerable<LocalizacionDataModel>> GetAllAsync(
             CancellationToken cancellationToken = default);
 
-        Task<IEnumerable<LocalizacionDataModel>> GetActivasAsync(
-            CancellationToken cancellationToken = default);
-
         Task<LocalizacionDataModel?> GetByIdAsync(
             int id,
             CancellationToken cancellationToken = default);

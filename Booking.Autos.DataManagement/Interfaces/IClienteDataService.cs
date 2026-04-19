@@ -10,8 +10,7 @@ namespace Booking.Autos.DataManagement.Interfaces
         // CONSULTAS
         // =========================
 
-        Task<DataPagedResult<ClienteDataModel>> GetAllAsync(
-            ClienteFiltroDataModel filtro,
+        Task<IReadOnlyList<ClienteDataModel>> GetAllAsync(
             CancellationToken cancellationToken = default);
 
         Task<ClienteDataModel?> GetByIdAsync(
@@ -20,6 +19,10 @@ namespace Booking.Autos.DataManagement.Interfaces
 
         Task<ClienteDataModel?> GetByIdentificacionAsync(
             string identificacion,
+            CancellationToken cancellationToken = default);
+
+        Task<DataPagedResult<ClienteDataModel>> BuscarAsync(
+            ClienteFiltroDataModel filtro,
             CancellationToken cancellationToken = default);
 
         // =========================
