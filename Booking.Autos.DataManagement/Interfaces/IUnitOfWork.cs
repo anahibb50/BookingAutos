@@ -23,6 +23,9 @@ namespace Booking.Autos.DataManagement.Interfaces
         IVehiculoRepository Vehiculos { get; }
         ICategoriaRepository Categorias { get; }
         ICiudadRepository Ciudades { get; }
+        
+        IRolRepository Roles { get; }
+        IUsuarioRolRepository UsuariosRoles { get; }
 
         // 🔍 QueryRepositories (LECTURA)
         CategoriaListQueryRepository CategoriaListQueryRepository { get; }

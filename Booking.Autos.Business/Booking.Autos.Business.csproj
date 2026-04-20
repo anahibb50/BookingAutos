@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Booking.Autos.DataManagement\Booking.Autos.DataManagement.csproj" />
+  </ItemGroup>
+
 </Project>

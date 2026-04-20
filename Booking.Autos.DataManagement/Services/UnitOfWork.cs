@@ -33,6 +33,9 @@ public class UnitOfWork : IUnitOfWork
     public ICategoriaRepository Categorias { get; }
     public ICiudadRepository Ciudades { get; }
 
+    public IRolRepository Roles { get; }
+    public IUsuarioRolRepository UsuariosRoles { get; }
+
     public CategoriaListQueryRepository CategoriaListQueryRepository { get; }
     public ExtraListQueryRepository ExtraQueries { get; }
 
@@ -67,6 +70,8 @@ public class UnitOfWork : IUnitOfWork
         Ciudades = new CiudadRepository(_context);
         CategoriaListQueryRepository = new CategoriaListQueryRepository(_context);
         ExtraQueries = new ExtraListQueryRepository(_context);
+        Roles = new RolRepository(_context);
+        UsuariosRoles = new UsuarioRolRepository(_context);
 
         LocalizacionListQueries = new LocalizacionListQueryRepository(_context);
         LocalizacionDetalleQueries = new LocalizacionDetalleQueryRepository(_context);

@@ -9,6 +9,8 @@
 
         public string Nombre { get; set; }
 
+        public string Descripcion { get; set; }
+
         // 🧾 Auditoría REAL de tu tabla
         public DateTime FechaCreacion { get; set; }
 
