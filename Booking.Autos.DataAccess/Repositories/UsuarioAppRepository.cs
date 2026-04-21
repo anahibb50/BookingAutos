@@ -47,7 +47,7 @@ namespace Booking.Autos.DataAccess.Repositories
         {
             return await _context.UsuariosApp
                 .FirstOrDefaultAsync(u =>
-                    u.username == username &&
+                    u.username.Trim().ToLower() == username.Trim().ToLower() &&
                     !u.es_eliminado,
                     cancellationToken);
         }

@@ -9,7 +9,7 @@ namespace Booking.Autos.API.Controllers.V1
 {
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/roles")]
+    [Route("api/roles")]
     [Authorize] // 🔥 importante en seguridad
     public class RolController : ControllerBase
     {

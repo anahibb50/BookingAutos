@@ -9,7 +9,7 @@ namespace Booking.Autos.DataAccess.Configurations
         public void Configure(EntityTypeBuilder<CategoriaEntity> builder)
         {
             // Nombre de la tabla
-            builder.ToTable("Categorias","categorias");
+            builder.ToTable("categorias","catalogos");
 
             // Llave primaria
             builder.HasKey(e => e.id_categoria);

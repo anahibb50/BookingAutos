@@ -9,7 +9,7 @@ namespace Booking.Autos.API.Controllers.V1.Catalogos
 {
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/categorias")]
+    [Route("api/categorias")]
     [Authorize] // 🔥 protegido (requiere JWT)
     public class CategoriaController : ControllerBase
     {

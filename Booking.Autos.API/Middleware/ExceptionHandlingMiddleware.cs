@@ -42,9 +42,9 @@ namespace Booking.Autos.API.Middleware
             switch (ex)
             {
                 // 🔴 VALIDACIONES
+                // ✅ ESTO ES LO CORRECTO
                 case ValidationException validationEx:
                     statusCode = HttpStatusCode.BadRequest;
-
                     response = new ApiErrorResponse(
                         "Errores de validación",
                         validationEx.Errors
@@ -63,7 +63,8 @@ namespace Booking.Autos.API.Middleware
                 // ❗ OTROS
                 default:
                     response = new ApiErrorResponse(
-                        "Ha ocurrido un error inesperado"
+                        ex.Message, // 🔥 mensaje real
+                        new List<string> { ex.StackTrace ?? "Sin stacktrace" } // 🔥 detalle
                     );
                     break;
             }

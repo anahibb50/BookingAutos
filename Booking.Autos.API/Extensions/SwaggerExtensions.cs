@@ -14,21 +14,29 @@ public static class SwaggerExtensions
                 Version = "v1"
             });
 
-            var securityScheme = new OpenApiSecurityScheme
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 Name = "Authorization",
-                Description = "Bearer {token}",
-                In = ParameterLocation.Header,
                 Type = SecuritySchemeType.Http,
                 Scheme = "bearer",
-                BearerFormat = "JWT"
-            };
-
-            options.AddSecurityDefinition("Bearer", securityScheme);
+                BearerFormat = "JWT",
+                In = ParameterLocation.Header,
+                Description = "Ingrese: Bearer {token}"
+            });
 
             options.AddSecurityRequirement(new OpenApiSecurityRequirement
-            {
-                { securityScheme, new string[] { } }
+{
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    new string[] {}
+                }
             });
         });
 

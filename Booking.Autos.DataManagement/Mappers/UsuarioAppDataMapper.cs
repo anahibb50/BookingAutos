@@ -12,6 +12,7 @@ namespace Booking.Autos.DataManagement.Mappers
             {
                 Id = entity.id_usuario,
                 Guid = entity.usuario_guid,
+                PasswordHash = entity.password_hash,
 
                 Username = entity.username,
                 Correo = entity.correo,

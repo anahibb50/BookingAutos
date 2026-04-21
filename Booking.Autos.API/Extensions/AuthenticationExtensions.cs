@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 using System.Text;
+using System.Diagnostics;
 
 namespace Booking.Autos.API.Extensions
 {
@@ -38,7 +40,28 @@ namespace Booking.Autos.API.Extensions
                         Encoding.UTF8.GetBytes(secretKey!)
                     ),
 
-                    ClockSkew = TimeSpan.Zero // 🔥 importante (no tolerancia de tiempo)
+                    RoleClaimType = ClaimTypes.Role,
+                    ClockSkew = TimeSpan.Zero
+                };
+
+                // 🔥 AQUÍ LOS LOGS
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        Debug.WriteLine("🔥 TOKEN HEADER: " + context.Request.Headers["Authorization"]);
+                        return Task.CompletedTask;
+                    },
+                    OnAuthenticationFailed = context =>
+                    {
+                        Debug.WriteLine("💣 ERROR JWT: " + context.Exception.Message);
+                        return Task.CompletedTask;
+                    },
+                    OnTokenValidated = context =>
+                    {
+                        Debug.WriteLine("✅ TOKEN VALIDADO CORRECTAMENTE");
+                        return Task.CompletedTask;
+                    }
                 };
             });
 

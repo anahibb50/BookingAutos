@@ -43,8 +43,10 @@ namespace Booking.Autos.Business.Services
             var usuario = await _usuarioDataService
                 .GetByUsernameAsync(request.Username, cancellationToken);
 
+            
+
             if (usuario == null)
-                throw new UnauthorizedBusinessException("Usuario o contraseña incorrectos.");
+                throw new UnauthorizedBusinessException("No se encuentra el usuario.");
 
             if (!usuario.Activo)
                 throw new UnauthorizedBusinessException("El usuario está inactivo.");

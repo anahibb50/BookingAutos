@@ -44,6 +44,11 @@ namespace Booking.Autos.API.Extensions
             services.AddScoped<IUsuarioRolService, UsuarioRolService>();
             services.AddScoped<IConductorReservaService, ConductorReservaService>();
             services.AddScoped<IReservaExtraService, ReservaExtraService>();
+            services.AddScoped<IUsuarioAppService, UsuarioAppService>();
+            services.AddScoped<ICategoriaService, CategoriaService>();
+            services.AddScoped<IClienteService, ClienteService>();
+            services.AddScoped<ICiudadService, CiudadService>();
+            services.AddScoped<IConductorService, ConductorService>();
 
             // ============================================================
             // 🔥 DATA SERVICES
@@ -59,6 +64,11 @@ namespace Booking.Autos.API.Extensions
             services.AddScoped<IUsuarioRolDataService, UsuarioRolDataService>();
             services.AddScoped<IConductorReservaDataService, ConductorReservaDataService>();
             services.AddScoped<IReservaExtraDataService, ReservaExtraDataService>();
+            services.AddScoped<IUsuarioAppDataService, UsuarioAppDataService>();
+            services.AddScoped<ICategoriaDataService, CategoriaDataService>();
+            services.AddScoped<IClienteDataService, ClienteDataService>();
+            services.AddScoped<ICiudadDataService, CiudadDataService>();
+            services.AddScoped<IConductorDataService, ConductorDataService>();
 
             return services;
         }
