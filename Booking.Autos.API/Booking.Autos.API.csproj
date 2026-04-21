@@ -7,10 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Middleware\" />
-    <Folder Include="Extensions\" />
-    <Folder Include="Controllers\" />
-    <Folder Include="Models\" />
+    <PackageReference Include="Asp.Versioning.Mvc" Version="8.1.1" />
+    <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.25" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Booking.Autos.Business\Booking.Autos.Business.csproj" />
+    <ProjectReference Include="..\Booking.Autos.DataAccess\Booking.Autos.DataAccess.csproj" />
+    <ProjectReference Include="..\Booking.Autos.DataManagement\Booking.Autos.DataManagement.csproj" />
   </ItemGroup>
 
 </Project>

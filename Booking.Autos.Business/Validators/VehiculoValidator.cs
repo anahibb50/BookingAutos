@@ -14,8 +14,7 @@ namespace Booking.Autos.Business.Validators
             // =========================
             // IDENTIFICACIÓN
             // =========================
-            if (string.IsNullOrWhiteSpace(request.CodigoInterno))
-                errors.Add("El código interno es obligatorio.");
+            
 
             if (string.IsNullOrWhiteSpace(request.Placa))
                 errors.Add("La placa es obligatoria.");

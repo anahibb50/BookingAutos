@@ -14,8 +14,7 @@ namespace Booking.Autos.Business.Validators
             // =========================
             // IDENTIFICACIÓN
             // =========================
-            if (string.IsNullOrWhiteSpace(request.Codigo))
-                errors.Add("El código es obligatorio.");
+            
 
             if (string.IsNullOrWhiteSpace(request.Nombre))
                 errors.Add("El nombre es obligatorio.");

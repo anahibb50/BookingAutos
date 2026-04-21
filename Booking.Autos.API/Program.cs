@@ -1,26 +1,55 @@
+﻿using Booking.Autos.API.Extensions;
+using Booking.Autos.API.Middleware;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddRazorPages();
+// ============================================================
+// 🔥 SERVICES
+// ============================================================
+
+// Controllers
+builder.Services.AddControllers();
+
+// 🔥 EXTENSIONS (LAS QUE YA CREASTE)
+builder.Services.AddProjectServices(builder.Configuration);     // DI (Business + Data + DbContext)
+builder.Services.AddSwaggerExtension();                         // Swagger + JWT
+builder.Services.AddApiVersioningExtension();                   // Versionado
+builder.Services.AddAuthenticationExtension(builder.Configuration); // JWT Auth
+builder.Services.AddCorsExtension(builder.Configuration);       // CORS
+
+// ============================================================
+// 🔥 BUILD APP
+// ============================================================
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+// ============================================================
+// 🔥 MIDDLEWARE PIPELINE
+// ============================================================
+
+// 🔥 Swagger SOLO en desarrollo
+if (app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
+    app.UseSwaggerExtension();
 }
+
+// 🔥 Middleware global de errores (MUY IMPORTANTE)
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 
-app.UseRouting();
+// 🔥 CORS
+app.UseCorsExtension();
 
+// 🔥 AUTH
+app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapStaticAssets();
-app.MapRazorPages()
-   .WithStaticAssets();
+// 🔥 Controllers
+app.MapControllers();
+
+// ============================================================
+// 🔥 RUN
+// ============================================================
 
 app.Run();
