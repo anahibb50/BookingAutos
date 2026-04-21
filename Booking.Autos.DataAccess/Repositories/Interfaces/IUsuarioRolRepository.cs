@@ -16,7 +16,12 @@ namespace Booking.Autos.DataAccess.Repositories.Interfaces
             int idRol,
             CancellationToken ct = default);
 
-        Task<UsuarioRolEntity?> GetAsync(
+        Task<UsuarioRolEntity?> GetByIdAsync(
+            int id,
+            CancellationToken ct = default);
+
+        // 🔥 para validar duplicados
+        Task<bool> ExistsAsync(
             int idUsuario,
             int idRol,
             CancellationToken ct = default);
@@ -38,9 +43,8 @@ namespace Booking.Autos.DataAccess.Repositories.Interfaces
             UsuarioRolEntity entity,
             CancellationToken ct = default);
 
-        Task RemoveAsync(
-            int idUsuario,
-            int idRol,
+        Task DeleteAsync(
+            int id,
             CancellationToken ct = default);
     }
 }

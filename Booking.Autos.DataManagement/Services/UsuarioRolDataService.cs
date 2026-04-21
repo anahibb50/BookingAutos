@@ -17,68 +17,101 @@ namespace Booking.Autos.DataManagement.Services
         // CONSULTAS
         // =========================
 
-        public async Task<IEnumerable<UsuarioRolDataModel>> GetByUsuarioAsync(int idUsuario, CancellationToken ct = default)
+        public async Task<IEnumerable<UsuarioRolDataModel>> GetByUsuarioAsync(
+            int idUsuario,
+            CancellationToken ct = default)
         {
-            var entities = await _unitOfWork.UsuariosRoles.GetByUsuarioAsync(idUsuario, ct);
+            var entities = await _unitOfWork.UsuariosRoles
+                .GetByUsuarioAsync(idUsuario, ct);
 
             return UsuarioRolDataMapper.ToDataModelList(entities);
         }
 
-        public async Task<IEnumerable<UsuarioRolDataModel>> GetByRolAsync(int idRol, CancellationToken ct = default)
+        public async Task<IEnumerable<UsuarioRolDataModel>> GetByRolAsync(
+            int idRol,
+            CancellationToken ct = default)
         {
-            var entities = await _unitOfWork.UsuariosRoles.GetByRolAsync(idRol, ct);
+            var entities = await _unitOfWork.UsuariosRoles
+                .GetByRolAsync(idRol, ct);
 
             return UsuarioRolDataMapper.ToDataModelList(entities);
         }
 
-        public async Task<UsuarioRolDataModel?> GetAsync(int idUsuario, int idRol, CancellationToken ct = default)
+        public async Task<UsuarioRolDataModel?> GetByIdAsync(int id)
         {
-            var entity = await _unitOfWork.UsuariosRoles.GetAsync(idUsuario, idRol, ct);
+            var entity = await _unitOfWork.UsuariosRoles
+                .GetByIdAsync(id);
 
-            return entity == null ? null : UsuarioRolDataMapper.ToDataModel(entity);
+            return entity == null
+                ? null
+                : UsuarioRolDataMapper.ToDataModel(entity);
         }
 
         // 🔥 CLAVE PARA AUTH
-        public async Task<List<string>> GetRolesByUsuarioAsync(int idUsuario, CancellationToken ct = default)
+        public async Task<List<string>> GetRolesByUsuarioAsync(
+            int idUsuario,
+            CancellationToken ct = default)
         {
-            return await _unitOfWork.UsuariosRoles.GetRolesByUsuarioAsync(idUsuario, ct);
+            return await _unitOfWork.UsuariosRoles
+                .GetRolesByUsuarioAsync(idUsuario, ct);
         }
 
         // =========================
         // ESCRITURA
         // =========================
 
-        public async Task AssignAsync(UsuarioRolDataModel model, CancellationToken ct = default)
+        public async Task AssignAsync(
+            UsuarioRolDataModel model,
+            CancellationToken ct = default)
         {
-            if (await ExistsAsync(model.IdUsuario, model.IdRol, ct))
+            // 🔥 validación por combinación (aquí sí tiene sentido)
+            var exists = await _unitOfWork.UsuariosRoles
+                .ExistsAsync(model.IdUsuario, model.IdRol, ct);
+
+            if (exists)
                 throw new Exception("El usuario ya tiene este rol");
 
             var entity = UsuarioRolDataMapper.ToEntity(model);
 
             await _unitOfWork.UsuariosRoles.AddAsync(entity, ct);
+            await _unitOfWork.SaveChangesAsync(ct);
         }
 
-        public async Task UpdateAsync(UsuarioRolDataModel model, CancellationToken ct = default)
+        public async Task UpdateAsync(
+            UsuarioRolDataModel model,
+            CancellationToken ct = default)
         {
             var entity = UsuarioRolDataMapper.ToEntity(model);
 
             await _unitOfWork.UsuariosRoles.UpdateAsync(entity, ct);
+            await _unitOfWork.SaveChangesAsync(ct);
         }
 
-        public async Task RemoveAsync(int idUsuario, int idRol, CancellationToken ct = default)
+        public async Task<bool> DeleteAsync(int id)
         {
-            await _unitOfWork.UsuariosRoles.RemoveAsync(idUsuario, idRol, ct);
+            await _unitOfWork.UsuariosRoles.DeleteAsync(id);
+            return await _unitOfWork.SaveChangesAsync() > 0;
         }
 
         // =========================
         // VALIDACIONES
         // =========================
 
-        public async Task<bool> ExistsAsync(int idUsuario, int idRol, CancellationToken ct = default)
+        public async Task<bool> ExistsByIdAsync(int id)
         {
-            var entity = await _unitOfWork.UsuariosRoles.GetAsync(idUsuario, idRol, ct);
+            var entity = await _unitOfWork.UsuariosRoles
+                .GetByIdAsync(id);
 
             return entity != null;
         }
+
+        public async Task<bool> ExistsAsync(
+            int idUsuario,
+            int idRol,
+        CancellationToken ct = default)
+            {
+                return await _unitOfWork.UsuariosRoles
+                    .ExistsAsync(idUsuario, idRol, ct);
+            }
     }
 }

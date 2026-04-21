@@ -66,7 +66,7 @@ namespace Booking.Autos.DataManagement.Services
         // ESCRITURA
         // =========================
 
-        public async Task AssignAsync(
+        public async Task<ConductorReservaDataModel> CreateAsync(
             ConductorReservaDataModel model,
             CancellationToken ct = default)
         {
@@ -74,9 +74,11 @@ namespace Booking.Autos.DataManagement.Services
 
             await _unitOfWork.ConductoresReservas.AddAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
+
+            return ConductorReservaDataMapper.ToDataModel(entity);
         }
 
-        public async Task UpdateAsync(
+        public async Task<ConductorReservaDataModel> UpdateAsync(
             ConductorReservaDataModel model,
             CancellationToken ct = default)
         {
@@ -84,17 +86,38 @@ namespace Booking.Autos.DataManagement.Services
 
             await _unitOfWork.ConductoresReservas.UpdateAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
+
+            return ConductorReservaDataMapper.ToDataModel(entity);
         }
 
-        public async Task RemoveAsync(
+        public async Task<bool> DeleteAsync(
             int idReserva,
             int idConductor,
             CancellationToken ct = default)
         {
+            // 🔥 OPCIÓN A: eliminación física (como tienes ahora)
             await _unitOfWork.ConductoresReservas
                 .DeleteAsync(idReserva, idConductor, ct);
 
             await _unitOfWork.SaveChangesAsync(ct);
+
+            return true;
+
+            // 🔥 OPCIÓN B (MEJOR): eliminación lógica
+            /*
+            var entity = await _unitOfWork.ConductoresReservas
+                .GetByIdsAsync(idReserva, idConductor, ct);
+
+            if (entity == null) return false;
+
+            entity.EsEliminado = true;
+            entity.FechaEliminacion = DateTime.UtcNow;
+
+            await _unitOfWork.ConductoresReservas.UpdateAsync(entity, ct);
+            await _unitOfWork.SaveChangesAsync(ct);
+
+            return true;
+            */
         }
 
         // =========================

@@ -1,4 +1,4 @@
-﻿namespace Microservicio.Clientes.DataManagement.Models
+﻿namespace Booking.Autos.DataManagement.Common
 {
     public class DataPagedResult<T>
     {

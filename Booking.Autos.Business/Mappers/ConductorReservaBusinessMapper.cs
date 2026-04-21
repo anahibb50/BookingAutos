@@ -1,5 +1,4 @@
 ﻿using Booking.Autos.Business.DTOs.ConductorReserva;
-using Booking.Autos.DataManagement.Models.Conductores;
 using Booking.Autos.DataManagement.Models.Reservas;
 
 namespace Booking.Autos.Business.Mappers
@@ -9,10 +8,32 @@ namespace Booking.Autos.Business.Mappers
         // =========================
         // CREAR → DATAMODEL
         // =========================
-        public static ConductorReservaDataModel ToDataModel(AssignConductorRequest request)
+        public static ConductorReservaDataModel ToDataModel(CrearConductorReservaDetalleRequest request)
         {
             return new ConductorReservaDataModel
             {
+                // IdReserva se asigna en el service
+
+                IdConductor = request.IdConductor,
+
+                Rol = request.Rol,
+                EsPrincipal = request.EsPrincipal,
+                Observaciones = request.Observaciones,
+
+                Estado = "ACT",
+
+                FechaRegistroUtc = DateTime.UtcNow
+            };
+        }
+
+        // =========================
+        // ACTUALIZAR → DATAMODEL (MISMO ESTILO QUE CIUDAD)
+        // =========================
+        public static ConductorReservaDataModel ToDataModel(ActualizarConductorReservaDetalleRequest request)
+        {
+            return new ConductorReservaDataModel
+            {
+
                 IdReserva = request.IdReserva,
                 IdConductor = request.IdConductor,
 
@@ -20,24 +41,18 @@ namespace Booking.Autos.Business.Mappers
                 EsPrincipal = request.EsPrincipal,
                 Observaciones = request.Observaciones,
 
-                // 🔥 estado inicial
-                Estado = "ACT",
-                EsEliminado = false,
-
-                // 🔥 auditoría mínima
-                FechaRegistroUtc = DateTime.UtcNow
+                FechaModificacionUtc = DateTime.UtcNow
             };
         }
 
         // =========================
-        // DATAMODEL → RESPONSE (RECOMENDADO)
+        // DATAMODEL → RESPONSE
         // =========================
-        public static ConductorReservaResponse ToResponse(ConductorReservaDataModel model)
+        public static ConductorReservaDetalleResponse ToResponse(ConductorReservaDataModel model)
         {
-            return new ConductorReservaResponse
+            return new ConductorReservaDetalleResponse
             {
-                Id = model.Id,
-                Guid = model.Guid,
+
 
                 IdReserva = model.IdReserva,
                 IdConductor = model.IdConductor,
@@ -53,7 +68,7 @@ namespace Booking.Autos.Business.Mappers
         // =========================
         // LISTA
         // =========================
-        public static List<ConductorReservaResponse> ToResponseList(IEnumerable<ConductorReservaDataModel> list)
+        public static List<ConductorReservaDetalleResponse> ToResponseList(IEnumerable<ConductorReservaDataModel> list)
         {
             return list.Select(ToResponse).ToList();
         }

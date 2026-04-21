@@ -1,11 +1,15 @@
-﻿namespace Booking.Autos.Business.DTOs.Reserva
+﻿using Booking.Autos.Business.DTOs.ConductorReserva;
+using Booking.Autos.Business.DTOs.ReservaExtra;
+
+namespace Booking.Autos.Business.DTOs.Reserva
 {
     public class ReservaResponse
     {
+        // 🔑 Identificación
         public int Id { get; set; }
         public Guid Guid { get; set; }
 
-        public string Codigo { get; set; }
+        public string Codigo { get; set; } = null!;
 
         // 🔗 Relaciones
         public int IdCliente { get; set; }
@@ -33,11 +37,15 @@
         public string? OrigenCanal { get; set; }
 
         // 🟢 Estado
-        public string Estado { get; set; }
+        public string Estado { get; set; } = null!;
 
         public DateTime? FechaConfirmacionUtc { get; set; }
         public DateTime? FechaCancelacionUtc { get; set; }
 
         public string? MotivoCancelacion { get; set; }
+
+        // 🔥 DETALLES (LO QUE TE FALTABA)
+        public List<ReservaExtraDetalleResponse>? Extras { get; set; }
+        public List<ConductorReservaDetalleResponse>? Conductores { get; set; }
     }
 }

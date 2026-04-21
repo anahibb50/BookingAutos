@@ -15,19 +15,25 @@ namespace Booking.Autos.Business.Mappers
                 Nombre = request.Nombre,
                 Apellido = request.Apellido,
 
+                RazonSocial = request.RazonSocial,
+
                 TipoIdentificacion = request.TipoIdentificacion,
                 Identificacion = request.Identificacion,
 
                 IdCiudad = request.IdCiudad,
+                Direccion = request.Direccion,
+
                 Genero = request.Genero,
 
                 Telefono = request.Telefono,
                 Email = request.Email,
 
+                // 🔥 ESTADO INICIAL
+                Estado = "ACT",
 
-                // 🔥 auditoría básica
+                // 🔥 AUDITORÍA
                 FechaRegistroUtc = DateTime.UtcNow,
-                
+                EsEliminado = false
             };
         }
 
@@ -43,10 +49,14 @@ namespace Booking.Autos.Business.Mappers
                 Nombre = request.Nombre,
                 Apellido = request.Apellido,
 
+                RazonSocial = request.RazonSocial,
+
                 TipoIdentificacion = request.TipoIdentificacion,
                 Identificacion = request.Identificacion,
 
                 IdCiudad = request.IdCiudad,
+                Direccion = request.Direccion,
+
                 Genero = request.Genero,
 
                 Telefono = request.Telefono,
@@ -54,9 +64,8 @@ namespace Booking.Autos.Business.Mappers
 
                 Estado = request.Estado,
 
-                // 🔥 auditoría
-                FechaModificacionUtc = DateTime.UtcNow,
-                
+                // 🔥 AUDITORÍA
+                FechaModificacionUtc = DateTime.UtcNow
             };
         }
 

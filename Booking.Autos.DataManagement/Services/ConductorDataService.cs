@@ -1,7 +1,7 @@
 ﻿using Booking.Autos.DataManagement.Interfaces;
 using Booking.Autos.DataManagement.Models.Conductores;
 using Booking.Autos.DataManagement.Mappers;
-using Microservicio.Clientes.DataManagement.Models;
+using Booking.Autos.DataManagement.Common;
 
 namespace Booking.Autos.DataManagement.Services
 {

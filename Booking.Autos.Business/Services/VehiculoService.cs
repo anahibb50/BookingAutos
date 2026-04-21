@@ -6,7 +6,7 @@ using Booking.Autos.Business.Validators;
 using Booking.Autos.DataManagement.Interfaces;
 using Booking.Autos.DataManagement.Models;
 using Booking.Autos.DataManagement.Models.Vehiculos;
-using Microservicio.Clientes.DataManagement.Models;
+using Booking.Autos.DataManagement.Common;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Booking.Autos.Business.Services
@@ -23,25 +23,31 @@ namespace Booking.Autos.Business.Services
         // =========================
         // CREAR
         // =========================
-        public async Task<VehiculoResponse> CrearAsync(CrearVehiculoRequest request, CancellationToken cancellationToken = default)
+        public async Task<VehiculoResponse> CrearAsync(CrearVehiculoRequest request, CancellationToken ct = default)
         {
             var errors = VehiculoValidator.ValidarCreacion(request);
 
             if (errors.Any())
                 throw new ValidationException(errors.ToList());
 
-            var existente = await _vehiculoDataService.GetByPlacaAsync(request.Placa, cancellationToken);
+            var existente = await _vehiculoDataService.GetByPlacaAsync(request.Placa, ct);
 
             if (existente is not null)
-                throw new ValidationException(errors.ToList());
+                throw new ValidationException(new List<string>
+        {
+            "Ya existe un vehículo con esa placa."
+        });
 
             var dataModel = VehiculoBusinessMapper.ToDataModel(request);
 
-            // 🔥 lógica backend
+            // 🔥 OBLIGATORIO
             dataModel.Guid = Guid.NewGuid();
-            dataModel.Estado = "DIS"; // Disponible
+            dataModel.CodigoInterno = $"VEH-{DateTime.UtcNow.Ticks}";
+            dataModel.Estado = "DIS";
+            dataModel.FechaRegistroUtc = DateTime.UtcNow;
+            dataModel.EsEliminado = false;
 
-            var creado = await _vehiculoDataService.CreateAsync(dataModel, cancellationToken);
+            var creado = await _vehiculoDataService.CreateAsync(dataModel, ct);
 
             return VehiculoBusinessMapper.ToResponse(creado);
         }
@@ -49,32 +55,35 @@ namespace Booking.Autos.Business.Services
         // =========================
         // ACTUALIZAR
         // =========================
-        public async Task<VehiculoResponse> ActualizarAsync(ActualizarVehiculoRequest request, CancellationToken cancellationToken = default)
+        public async Task<VehiculoResponse> ActualizarAsync(ActualizarVehiculoRequest request, CancellationToken ct = default)
         {
             var errors = VehiculoValidator.ValidarActualizacion(request);
 
             if (errors.Any())
                 throw new ValidationException(errors.ToList());
 
-            var existente = await _vehiculoDataService.GetByIdAsync(request.Id, cancellationToken);
+            var existente = await _vehiculoDataService.GetByIdAsync(request.Id, ct);
 
             if (existente is null)
-                throw new NotFoundException("No se encontró el vehículo solicitado.");
+                throw new NotFoundException("Vehiculo", request.Id);
 
-            var porPlaca = await _vehiculoDataService.GetByPlacaAsync(request.Placa, cancellationToken);
+            var porPlaca = await _vehiculoDataService.GetByPlacaAsync(request.Placa, ct);
 
             if (porPlaca is not null && porPlaca.Id != request.Id)
-                throw new ValidationException(errors.ToList());
+                throw new ValidationException(new List<string>
+        {
+            "La placa ya está en uso."
+        });
 
             var dataModel = VehiculoBusinessMapper.ToDataModel(request);
 
-            // 🔥 mantener datos originales
+            // 🔥 mantener integridad
             dataModel.Guid = existente.Guid;
+            dataModel.CodigoInterno = existente.CodigoInterno;
+            dataModel.FechaRegistroUtc = existente.FechaRegistroUtc;
+            dataModel.EsEliminado = existente.EsEliminado;
 
-            var actualizado = await _vehiculoDataService.UpdateAsync(dataModel, cancellationToken);
-
-            if (actualizado is null)
-                throw new NotFoundException("No se pudo actualizar el vehículo.");
+            var actualizado = await _vehiculoDataService.UpdateAsync(dataModel, ct);
 
             return VehiculoBusinessMapper.ToResponse(actualizado);
         }
@@ -127,8 +136,8 @@ namespace Booking.Autos.Business.Services
             {
                 Items = result.Items.Select(VehiculoBusinessMapper.ToResponse).ToList(),
                 Page = result.Page,
-                PageSize = result.PageSize
-                
+                PageSize = result.PageSize,
+                TotalRecords = result.TotalRecords
             };
         }
 
@@ -170,13 +179,15 @@ namespace Booking.Autos.Business.Services
         // =========================
         // OPERACIONES ESPECIALES
         // =========================
-        public async Task<bool> ActualizarKilometrajeAsync(int id, int nuevoKilometraje, CancellationToken cancellationToken = default)
+        public async Task<bool> ActualizarKilometrajeAsync(int id, int nuevoKilometraje, CancellationToken ct = default)
         {
-            var errors = VehiculoValidator.ValidarActualizacion(new ActualizarVehiculoRequest { Id = id, KilometrajeActual = nuevoKilometraje });
             if (nuevoKilometraje < 0)
-                throw new ValidationException(errors.ToList());
+                throw new ValidationException(new List<string>
+        {
+            "El kilometraje no puede ser negativo."
+        });
 
-            return await _vehiculoDataService.UpdateKilometrajeAsync(id, nuevoKilometraje, cancellationToken);
+            return await _vehiculoDataService.UpdateKilometrajeAsync(id, nuevoKilometraje, ct);
         }
 
         public async Task<bool> ActualizarEstadoAsync(int id, string estado, CancellationToken cancellationToken = default)
@@ -195,12 +206,18 @@ namespace Booking.Autos.Business.Services
         // =========================
         // ELIMINAR
         // =========================
-        public async Task EliminarLogicoAsync(int id, string usuario, CancellationToken cancellationToken = default)
+        public async Task EliminarLogicoAsync(int id, string usuario, CancellationToken ct = default)
         {
-            var eliminado = await _vehiculoDataService.DeleteAsync(id, cancellationToken);
+            var existente = await _vehiculoDataService.GetByIdAsync(id, ct);
 
-            if (!eliminado)
-                throw new NotFoundException("No se encontró el vehículo para eliminar.");
+            if (existente is null)
+                throw new NotFoundException("Vehiculo", id);
+
+            existente.EsEliminado = true;
+            existente.FechaInhabilitacionUtc = DateTime.UtcNow;
+            existente.MotivoInhabilitacion = "Eliminado lógico";
+
+            await _vehiculoDataService.UpdateAsync(existente, ct);
         }
     }
 }

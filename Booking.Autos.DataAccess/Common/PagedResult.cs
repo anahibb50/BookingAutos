@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Microservicio.Clientes.DataAccess.Common
+namespace Booking.Autos.DataAccess.Common
 {
     public class PagedResult<T> where T : class
     {

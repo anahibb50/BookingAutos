@@ -1,4 +1,7 @@
-﻿namespace Booking.Autos.Business.DTOs.Reserva
+﻿using Booking.Autos.Business.DTOs.ConductorReserva;
+using Booking.Autos.Business.DTOs.ReservaExtra;
+
+namespace Booking.Autos.Business.DTOs.Reserva
 {
     public class ActualizarReservaRequest
     {
@@ -16,5 +19,8 @@
 
         // 📝 Info
         public string? Descripcion { get; set; }
+
+        public List<ActualizarReservaExtraDetalleRequest>? Extras { get; set; }
+        public List<ActualizarConductorReservaDetalleRequest>? Conductores { get; set; }
     }
 }

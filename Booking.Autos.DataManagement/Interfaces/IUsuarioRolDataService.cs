@@ -16,10 +16,7 @@ namespace Booking.Autos.DataManagement.Interfaces
             int idRol,
             CancellationToken cancellationToken = default);
 
-        Task<UsuarioRolDataModel?> GetAsync(
-            int idUsuario,
-            int idRol,
-            CancellationToken cancellationToken = default);
+        Task<UsuarioRolDataModel?> GetByIdAsync(int id);
 
         // 🔥 CLAVE PARA LOGIN
         Task<List<string>> GetRolesByUsuarioAsync(
@@ -38,14 +35,13 @@ namespace Booking.Autos.DataManagement.Interfaces
             UsuarioRolDataModel model,
             CancellationToken cancellationToken = default);
 
-        Task RemoveAsync(
-            int idUsuario,
-            int idRol,
-            CancellationToken cancellationToken = default);
+        Task<bool> DeleteAsync(int id);
 
         // =========================
         // VALIDACIONES
         // =========================
+
+        Task<bool> ExistsByIdAsync(int id);
 
         Task<bool> ExistsAsync(
             int idUsuario,

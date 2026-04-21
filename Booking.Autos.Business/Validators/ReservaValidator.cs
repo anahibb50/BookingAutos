@@ -26,6 +26,9 @@ namespace Booking.Autos.Business.Validators
             if (request.IdLocalizacionEntrega <= 0)
                 errors.Add("La localización de entrega es obligatoria.");
 
+            if (request.CantidadDias <= 0)
+                errors.Add("La cantidad de días debe ser mayor a 0.");
+
             // =========================
             // FECHAS (🔥 CRÍTICO)
             // =========================
@@ -72,6 +75,7 @@ namespace Booking.Autos.Business.Validators
             // =========================
             if (request.Id <= 0)
                 errors.Add("El id de la reserva es inválido.");
+
 
             // =========================
             // FECHAS

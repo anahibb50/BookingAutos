@@ -18,6 +18,9 @@
         // 🟢 Estado
         public string? Estado { get; set; }
 
+        public int? EdadMin { get; set; }
+        public int? EdadMax { get; set; }
+
         // 📅 Rango de vencimiento de licencia
         public DateTime? FechaVencimientoDesde { get; set; }
 

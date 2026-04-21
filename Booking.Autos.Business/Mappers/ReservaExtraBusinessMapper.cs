@@ -8,23 +8,37 @@ namespace Booking.Autos.Business.Mappers
         // =========================
         // CREAR → DATAMODEL
         // =========================
-        public static ReservaExtraDataModel ToDataModel(AddExtraRequest request)
+        public static ReservaExtraDataModel ToDataModel(CrearReservaExtraDetalleRequest request)
         {
             return new ReservaExtraDataModel
             {
-                IdReserva = request.IdReserva,
+                // IdReserva se asigna en el service
+
                 IdExtra = request.IdExtra,
                 Cantidad = request.Cantidad,
 
-                // 🔥 estos NO vienen del request
-                // se llenan en el service:
+                // 🔥 valores calculados en service
                 // ValorUnitario
                 // Subtotal
 
                 Estado = "ACT",
                 EsEliminado = false,
 
-                FechaCreacion = DateTime.UtcNow,
+                FechaCreacion = DateTime.UtcNow
+            };
+        }
+
+        // =========================
+        // ACTUALIZAR → DATAMODEL (MISMO ESTILO QUE CIUDAD)
+        // =========================
+        public static ReservaExtraDataModel ToDataModel(ActualizarReservaExtraDetalleRequest request)
+        {
+            return new ReservaExtraDataModel
+            {
+                Id = request.Id!.Value,
+                IdExtra = request.IdExtra,
+                Cantidad = request.Cantidad,
+
                 FechaActualizacion = DateTime.UtcNow
             };
         }
@@ -32,9 +46,9 @@ namespace Booking.Autos.Business.Mappers
         // =========================
         // DATAMODEL → RESPONSE
         // =========================
-        public static ReservaExtraResponse ToResponse(ReservaExtraDataModel model)
+        public static ReservaExtraDetalleResponse ToResponse(ReservaExtraDataModel model)
         {
-            return new ReservaExtraResponse
+            return new ReservaExtraDetalleResponse
             {
                 Id = model.Id,
                 Guid = model.Guid,
@@ -53,7 +67,7 @@ namespace Booking.Autos.Business.Mappers
         // =========================
         // LISTA
         // =========================
-        public static List<ReservaExtraResponse> ToResponseList(IEnumerable<ReservaExtraDataModel> list)
+        public static List<ReservaExtraDetalleResponse> ToResponseList(IEnumerable<ReservaExtraDataModel> list)
         {
             return list.Select(ToResponse).ToList();
         }

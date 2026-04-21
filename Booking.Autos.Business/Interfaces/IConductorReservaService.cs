@@ -8,12 +8,14 @@ namespace Booking.Autos.Business.Interfaces
         // ESCRITURA
         // =========================
 
-        Task<ConductorReservaResponse> AsignarAsync(
-            AssignConductorRequest request,
-            CancellationToken cancellationToken = default);
 
-        Task<ConductorReservaResponse> ActualizarAsync(
-            AssignConductorRequest request,
+        Task<ConductorReservaDetalleResponse> CrearAsync(
+            int idReserva,
+            CrearConductorReservaDetalleRequest request,
+            CancellationToken ct = default);
+
+        Task<ConductorReservaDetalleResponse> ActualizarAsync(
+            ActualizarConductorReservaDetalleRequest request,
             CancellationToken cancellationToken = default);
 
         Task RemoverAsync(
@@ -25,21 +27,20 @@ namespace Booking.Autos.Business.Interfaces
         // CONSULTAS
         // =========================
 
-        Task<IReadOnlyList<ConductorReservaResponse>> ObtenerPorReservaAsync(
+        Task<IReadOnlyList<ConductorReservaDetalleResponse>> ObtenerPorReservaAsync(
             int idReserva,
             CancellationToken cancellationToken = default);
 
-        Task<IReadOnlyList<ConductorReservaResponse>> ObtenerPorConductorAsync(
+        Task<IReadOnlyList<ConductorReservaDetalleResponse>> ObtenerPorConductorAsync(
             int idConductor,
             CancellationToken cancellationToken = default);
 
-        Task<ConductorReservaResponse?> ObtenerAsync(
+        Task<ConductorReservaDetalleResponse?> ObtenerAsync(
             int idReserva,
             int idConductor,
             CancellationToken cancellationToken = default);
 
-        // 🔥 CLAVE DE NEGOCIO
-        Task<ConductorReservaResponse?> ObtenerPrincipalPorReservaAsync(
+        Task<ConductorReservaDetalleResponse?> ObtenerPrincipalPorReservaAsync(
             int idReserva,
             CancellationToken cancellationToken = default);
 

@@ -25,9 +25,7 @@ namespace Booking.Autos.DataAccess.Repositories
             return await _context.UsuariosRoles
                 .AsNoTracking()
                 .Include(x => x.Rol)
-                .Where(x =>
-                    x.id_usuario == idUsuario &&
-                    !x.es_eliminado)
+                .Where(x => x.id_usuario == idUsuario && !x.es_eliminado)
                 .ToListAsync(ct);
         }
 
@@ -38,26 +36,34 @@ namespace Booking.Autos.DataAccess.Repositories
             return await _context.UsuariosRoles
                 .AsNoTracking()
                 .Include(x => x.UsuarioApp)
-                .Where(x =>
-                    x.id_rol == idRol &&
-                    !x.es_eliminado)
+                .Where(x => x.id_rol == idRol && !x.es_eliminado)
                 .ToListAsync(ct);
         }
 
-        public async Task<UsuarioRolEntity?> GetAsync(
+        public async Task<UsuarioRolEntity?> GetByIdAsync(
+            int id,
+            CancellationToken ct = default)
+        {
+            return await _context.UsuariosRoles
+                .FirstOrDefaultAsync(x =>
+                    x.id_usuario_rol == id &&
+                    !x.es_eliminado,
+                    ct);
+        }
+
+        public async Task<bool> ExistsAsync(
             int idUsuario,
             int idRol,
             CancellationToken ct = default)
         {
             return await _context.UsuariosRoles
-                .FirstOrDefaultAsync(x =>
+                .AnyAsync(x =>
                     x.id_usuario == idUsuario &&
                     x.id_rol == idRol &&
                     !x.es_eliminado,
                     ct);
         }
 
-        // 🔥 ESTE ES EL MÁS IMPORTANTE
         public async Task<List<string>> GetRolesByUsuarioAsync(
             int idUsuario,
             CancellationToken ct = default)
@@ -87,7 +93,6 @@ namespace Booking.Autos.DataAccess.Repositories
             entity.estado_usuario_rol = "ACT";
 
             await _context.UsuariosRoles.AddAsync(entity, ct);
-            await _context.SaveChangesAsync(ct);
         }
 
         public async Task UpdateAsync(
@@ -96,43 +101,37 @@ namespace Booking.Autos.DataAccess.Repositories
         {
             var existing = await _context.UsuariosRoles
                 .FirstOrDefaultAsync(x =>
-                    x.id_usuario == entity.id_usuario &&
-                    x.id_rol == entity.id_rol,
+                    x.id_usuario_rol == entity.id_usuario_rol,
                     ct);
 
             if (existing == null)
-                throw new Exception("Relación Usuario-Rol no encontrada");
+                throw new Exception("UsuarioRol no encontrado");
 
-            existing.estado_usuario_rol = entity.estado_usuario_rol;
+            existing.id_rol = entity.id_rol;
             existing.activo = entity.activo;
+            existing.estado_usuario_rol = entity.estado_usuario_rol;
 
             existing.modificado_por_usuario = entity.modificado_por_usuario;
             existing.fecha_modificacion_utc = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync(ct);
         }
 
-        public async Task RemoveAsync(
-            int idUsuario,
-            int idRol,
+        public async Task DeleteAsync(
+            int id,
             CancellationToken ct = default)
         {
             var existing = await _context.UsuariosRoles
                 .FirstOrDefaultAsync(x =>
-                    x.id_usuario == idUsuario &&
-                    x.id_rol == idRol,
+                    x.id_usuario_rol == id,
                     ct);
 
             if (existing == null)
-                throw new Exception("Relación Usuario-Rol no encontrada");
+                throw new Exception("UsuarioRol no encontrado");
 
             // 🔥 SOFT DELETE
             existing.es_eliminado = true;
             existing.activo = false;
             existing.estado_usuario_rol = "INA";
             existing.fecha_modificacion_utc = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync(ct);
         }
     }
 }

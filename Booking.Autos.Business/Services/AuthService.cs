@@ -1,7 +1,6 @@
 ﻿using Booking.Autos.Business.DTOs.Auth;
 using Booking.Autos.Business.Exceptions;
 using Booking.Autos.Business.Interfaces;
-using Booking.Autos.DataAccess.Entities;
 using Booking.Autos.DataManagement.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -13,54 +12,64 @@ namespace Booking.Autos.Business.Services
 {
     public class AuthService : IAuthService
     {
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly IConfiguration _configuration;
+        private readonly IUsuarioAppDataService _usuarioDataService;
+        private readonly IUsuarioRolDataService _usuarioRolDataService;
+        private readonly IConfiguration _config;
 
-        public AuthService(IUnitOfWork unitOfWork, IConfiguration configuration)
+        public AuthService(
+            IUsuarioAppDataService usuarioDataService,
+            IUsuarioRolDataService usuarioRolDataService,
+            IConfiguration config)
         {
-            _unitOfWork = unitOfWork;
-            _configuration = configuration;
+            _usuarioDataService = usuarioDataService;
+            _usuarioRolDataService = usuarioRolDataService;
+            _config = config;
         }
 
         // =========================
         // LOGIN
         // =========================
-        public async Task<LoginResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
+        public async Task<LoginResponse> LoginAsync(
+            LoginRequest request,
+            CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(request.Usuario) || string.IsNullOrWhiteSpace(request.Password))
-                throw new ValidationException(new List<string> { "El usuario y la contraseña son obligatorios." });
+            if (string.IsNullOrWhiteSpace(request.Username))
+                throw new ValidationException(new List<string> { "El username es obligatorio." });
 
-            var usuarioDB = await _unitOfWork.UsuariosApp
-                .GetByUserNameAsync(request.Usuario, cancellationToken);
+            if (string.IsNullOrWhiteSpace(request.Password))
+                throw new ValidationException(new List<string> { "La contraseña es obligatoria." });
 
-            if (usuarioDB == null)
+            // 🔍 USUARIO
+            var usuario = await _usuarioDataService
+                .GetByUsernameAsync(request.Username, cancellationToken);
+
+            if (usuario == null)
                 throw new UnauthorizedBusinessException("Usuario o contraseña incorrectos.");
 
-            if (!usuarioDB.Activo)
+            if (!usuario.Activo)
                 throw new UnauthorizedBusinessException("El usuario está inactivo.");
 
-            if (usuarioDB.PasswordHash != request.Password)
+            // 🔐 PASSWORD (temporal)
+            if (usuario.PasswordHash != request.Password)
                 throw new UnauthorizedBusinessException("Usuario o contraseña incorrectos.");
 
-            // 🔥 roles
-            var roles = usuarioDB.UsuarioRoles?
-                .Where(r => r.Rol != null)
-                .Select(r => r.Rol.Nombre)
-                .Distinct()
-                .ToList() ?? new List<string>();
+            // 🔥 ROLES (CORRECTO)
+            var roles = await _usuarioRolDataService
+                .GetRolesByUsuarioAsync(usuario.Id, cancellationToken);
 
-            // 🔥 TOKEN (método separado ✔)
-            var token = GenerarTokenJWT(usuarioDB, roles);
+            // 🔥 TOKEN
+            var (token, expira) = GenerarJwt(usuario.Id, usuario.Username, roles);
 
             return new LoginResponse
             {
                 Token = token,
                 Tipo = "Bearer",
-                ExpiraEn = 3600,
+                ExpiraEn = expira,
 
-                Usuario = usuarioDB.UserName,
-                NombreCompleto = usuarioDB.NombreCompleto,
-                Correo = usuarioDB.CorreoElectronico,
+                IdUsuario = usuario.Id,
+                Username = usuario.Username,
+                Correo = usuario.Correo ?? "",
+
                 Roles = roles
             };
         }
@@ -73,7 +82,6 @@ namespace Booking.Autos.Business.Services
             if (string.IsNullOrWhiteSpace(token))
                 return false;
 
-            // 🔥 validación básica (puedes mejorar luego con JWT real)
             return await Task.FromResult(true);
         }
 
@@ -85,15 +93,13 @@ namespace Booking.Autos.Business.Services
             if (string.IsNullOrWhiteSpace(refreshToken))
                 throw new ValidationException(new List<string> { "Refresh token inválido." });
 
-            // 🔥 en producción validarías el refreshToken
-
             var nuevoToken = Guid.NewGuid().ToString();
 
             return new LoginResponse
             {
                 Token = nuevoToken,
                 Tipo = "Bearer",
-                ExpiraEn = 3600
+                ExpiraEn = DateTime.UtcNow.AddHours(1)
             };
         }
 
@@ -105,50 +111,44 @@ namespace Booking.Autos.Business.Services
             if (string.IsNullOrWhiteSpace(token))
                 return false;
 
-            // 🔥 aquí puedes implementar blacklist
             return await Task.FromResult(true);
         }
 
         // =========================
-        // 🔥 GENERAR JWT (SEPARADO ✔)
+        // JWT
         // =========================
-        private string GenerarTokenJWT(UsuarioAppEntity usuario, List<string> roles)
+        private (string token, DateTime expira) GenerarJwt(
+            int idUsuario,
+            string username,
+            List<string> roles)
         {
-            var jwtSecret = _configuration["JwtSettings:SecretKey"];
-            var issuer = _configuration["JwtSettings:Issuer"];
-            var audience = _configuration["JwtSettings:Audience"];
+            var secret = _config["JwtSettings:SecretKey"];
+            var issuer = _config["JwtSettings:Issuer"];
+            var audience = _config["JwtSettings:Audience"];
 
-            var key = Encoding.ASCII.GetBytes(jwtSecret);
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var expira = DateTime.UtcNow.AddHours(1);
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
-                new Claim(ClaimTypes.Name, usuario.UserName),
-                new Claim(ClaimTypes.Email, usuario.CorreoElectronico ?? ""),
-                new Claim("nombreCompleto", usuario.NombreCompleto ?? "")
+                new Claim(JwtRegisteredClaimNames.Sub, idUsuario.ToString()),
+                new Claim(JwtRegisteredClaimNames.UniqueName, username),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            foreach (var role in roles)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, role));
-            }
+            foreach (var rol in roles)
+                claims.Add(new Claim(ClaimTypes.Role, rol));
 
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddHours(1),
-                Issuer = issuer,
-                Audience = audience,
-                SigningCredentials = new SigningCredentials(
-                    new SymmetricSecurityKey(key),
-                    SecurityAlgorithms.HmacSha256Signature
-                )
-            };
+            var token = new JwtSecurityToken(
+                issuer,
+                audience,
+                claims,
+                expires: expira,
+                signingCredentials: creds);
 
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-
-            return tokenHandler.WriteToken(token);
+            return (new JwtSecurityTokenHandler().WriteToken(token), expira);
         }
     }
 }

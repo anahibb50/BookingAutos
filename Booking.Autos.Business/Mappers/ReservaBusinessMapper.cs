@@ -12,7 +12,6 @@ namespace Booking.Autos.Business.Mappers
         {
             return new ReservaDataModel
             {
-
                 IdCliente = request.IdCliente,
                 IdVehiculo = request.IdVehiculo,
 
@@ -25,15 +24,12 @@ namespace Booking.Autos.Business.Mappers
                 HoraInicio = request.HoraInicio,
                 HoraFin = request.HoraFin,
 
-                Descripcion = request.Descripcion,
-                OrigenCanal = request.OrigenCanal,
+                CantidadDias = request.CantidadDias, // 🔥 faltaba
 
-                // 🔥 valores iniciales (se calculan bien en service)
-             
-                // 🔥 estado inicial
+                Descripcion = request.Descripcion,
+
                 Estado = "PEN",
 
-                // 🔥 auditoría mínima
                 FechaReservaUtc = DateTime.UtcNow,
                 EsEliminado = false
             };

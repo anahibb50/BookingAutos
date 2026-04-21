@@ -1,6 +1,6 @@
 ﻿using Booking.Autos.Business.DTOs.Cliente;
+using Booking.Autos.DataManagement.Common;
 using Booking.Autos.DataManagement.Models;
-using Microservicio.Clientes.DataManagement.Models;
 
 namespace Booking.Autos.Business.Interfaces
 {
@@ -38,7 +38,7 @@ namespace Booking.Autos.Business.Interfaces
         Task<IReadOnlyList<ClienteResponse>> ListarAsync(
             CancellationToken cancellationToken = default);
 
-        // 🔥 CLAVE (PAGINACIÓN)
+        // 🔥 PAGINACIÓN
         Task<DataPagedResult<ClienteResponse>> BuscarAsync(
             ClienteFiltroRequest request,
             CancellationToken cancellationToken = default);

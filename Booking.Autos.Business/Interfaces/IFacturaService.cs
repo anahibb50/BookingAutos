@@ -1,6 +1,6 @@
 ﻿using Booking.Autos.Business.DTOs.Factura;
 using Booking.Autos.DataManagement.Models;
-using Microservicio.Clientes.DataManagement.Models;
+using Booking.Autos.DataManagement.Common;
 
 namespace Booking.Autos.Business.Interfaces
 {
