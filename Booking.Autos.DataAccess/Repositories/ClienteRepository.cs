@@ -90,25 +90,10 @@ namespace Booking.Autos.DataAccess.Repositories
             cliente.es_eliminado = false;
 
             await _context.Clientes.AddAsync(cliente, cancellationToken);
-            try
-            {
-                await _context.SaveChangesAsync(cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                // Ver todos los valores de la entidad
-                var detalle = $"guid={cliente.cliente_guid} | " +
-                              $"nombre={cliente.cli_nombre} | " +
-                              $"apellido={cliente.cli_apellido} | " +
-                              $"tipo_id={cliente.tipo_identificacion} | " +
-                              $"ruc_ced={cliente.cli_ruc_ced} | " +
-                              $"ciudad={cliente.id_ciudad} | " +
-                              $"estado={cliente.cli_estado} | " +
-                              $"creado_por={cliente.creado_por_usuario}";
-
-                var innerMessage = ex.InnerException?.Message ?? ex.Message;
-                throw new Exception($"ERROR REAL CLIENTE: {innerMessage} | VALORES: {detalle}", ex);
-            }
+           
+            
+            await _context.SaveChangesAsync(cancellationToken);
+        
         }
 
         public async Task UpdateAsync(ClienteEntity cliente, CancellationToken cancellationToken = default)

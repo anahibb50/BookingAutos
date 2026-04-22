@@ -37,11 +37,13 @@ namespace Booking.Autos.Business.Mappers
                 ImagenUrl = request.ImagenUrl,
 
                 // 🔥 estado inicial
-                Estado = "DIS", // disponible
+                Estado = "ACT", // disponible
                 EsEliminado = false,
 
                 // 🔥 auditoría mínima
-                FechaRegistroUtc = DateTime.UtcNow
+                FechaRegistroUtc = DateTime.UtcNow,
+                OrigenRegistro = "WEB",      // ✅ campo NOT NULL que faltaba
+                CreadoPorUsuario = "SISTEMA"
             };
         }
 

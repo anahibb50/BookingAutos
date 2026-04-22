@@ -87,8 +87,27 @@ namespace Booking.Autos.Business.Validators
         {
             var errors = new List<string>();
 
-            if (estado != "DIS" && estado != "RES" && estado != "MAN")
+            if (estado != "ACT" && estado != "INA" )
                 errors.Add("Estado de vehículo inválido.");
+
+            return errors;
+        }
+
+        public static IReadOnlyCollection<string> ValidarRelaciones(
+            bool marcaExiste,
+            bool categoriaExiste,
+            bool localizacionExiste)
+        {
+            var errors = new List<string>();
+
+            if (!marcaExiste)
+                errors.Add("La marca especificada no existe.");
+
+            if (!categoriaExiste)
+                errors.Add("La categoría especificada no existe.");
+
+            if (!localizacionExiste)
+                errors.Add("La localización especificada no existe.");
 
             return errors;
         }

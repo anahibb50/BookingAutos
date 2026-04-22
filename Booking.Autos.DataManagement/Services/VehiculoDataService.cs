@@ -1,7 +1,8 @@
-﻿using Booking.Autos.DataManagement.Interfaces;
-using Booking.Autos.DataManagement.Models.Vehiculos;
+﻿using Booking.Autos.DataManagement.Common;
+using Booking.Autos.DataManagement.Interfaces;
 using Booking.Autos.DataManagement.Mappers;
-using Booking.Autos.DataManagement.Common;
+using Booking.Autos.DataManagement.Models.Vehiculos;
+using Microsoft.EntityFrameworkCore;
 
 namespace Booking.Autos.DataManagement.Services
 {
@@ -134,7 +135,7 @@ namespace Booking.Autos.DataManagement.Services
             var entities = await _unitOfWork.Vehiculos.GetAllAsync(ct);
 
             return entities
-                .Where(x => x.estado_vehiculo == "DIS" && !x.es_eliminado)
+                .Where(x => x.estado_vehiculo == "ACT" && !x.es_eliminado)
                 .Select(VehiculoDataMapper.ToDataModel);
         }
 
@@ -147,31 +148,7 @@ namespace Booking.Autos.DataManagement.Services
                 .Select(VehiculoDataMapper.ToDataModel);
         }
 
-        // =========================
-        // DISPONIBILIDAD 🔥
-        // =========================
-
-        public async Task<bool> IsDisponibleAsync(
-            int idVehiculo,
-            DateTime fechaInicio,
-            DateTime fechaFin,
-            CancellationToken ct = default)
-        {
-            // ⚠️ necesitas localización → puedes obtenerla del vehículo
-            var vehiculo = await _unitOfWork.Vehiculos.GetByIdAsync(idVehiculo, ct);
-
-            if (vehiculo == null)
-                return false;
-
-            return await _unitOfWork.VehiculoDisponibilidadQueries
-                .IsDisponibleAsync(
-                    idVehiculo,
-                    fechaInicio,
-                    fechaFin,
-                    vehiculo.localizacion_actual,
-                    ct
-                );
-        }
+       
 
         // =========================
         // ESCRITURA
@@ -179,16 +156,21 @@ namespace Booking.Autos.DataManagement.Services
 
         public async Task<VehiculoDataModel> CreateAsync(VehiculoDataModel model, CancellationToken ct = default)
         {
-            var entity = VehiculoDataMapper.ToEntity(model);
+            try
+            {
+                var entity = VehiculoDataMapper.ToEntity(model);
 
-            entity.vehiculo_guid = Guid.NewGuid();
-            entity.fecha_registro_utc = DateTime.UtcNow;
-            entity.es_eliminado = false;
+                await _unitOfWork.Vehiculos.AddAsync(entity, ct);
+                await _unitOfWork.SaveChangesAsync(ct);
 
-            await _unitOfWork.Vehiculos.AddAsync(entity, ct);
-            await _unitOfWork.SaveChangesAsync(ct);
-
-            return VehiculoDataMapper.ToDataModel(entity);
+                return VehiculoDataMapper.ToDataModel(entity);
+            }
+            catch (DbUpdateException ex)
+            {
+                // 🔥 Esto te dice el error REAL de SQL
+                var innerMessage = ex.InnerException?.Message ?? ex.Message;
+                throw new Exception($"DB ERROR: {innerMessage}", ex);
+            }
         }
 
         public async Task<VehiculoDataModel> UpdateAsync(VehiculoDataModel model, CancellationToken ct = default)
@@ -201,8 +183,11 @@ namespace Booking.Autos.DataManagement.Services
             existing.modelo_vehiculo = model.Modelo;
             existing.precio_base_dia = model.PrecioBaseDia;
             existing.color_vehiculo = model.Color;
-
+            existing.placa_vehiculo = model.Placa;
             existing.fecha_modificacion_utc = DateTime.UtcNow;
+            existing.es_eliminado = model.EsEliminado;
+            existing.fecha_inhabilitacion_utc = model.FechaInhabilitacionUtc;
+            existing.motivo_inhabilitacion = model.MotivoInhabilitacion;
 
             await _unitOfWork.Vehiculos.UpdateAsync(existing, ct);
             await _unitOfWork.SaveChangesAsync(ct);
@@ -271,6 +256,24 @@ namespace Booking.Autos.DataManagement.Services
             return entities.Any(x =>
                 x.placa_vehiculo == placa &&
                 !x.es_eliminado);
+        }
+
+        public async Task<bool> ExisteMarcaAsync(int idMarca, CancellationToken ct = default)
+        {
+            var marca = await _unitOfWork.Marcas.GetByIdAsync(idMarca, ct);
+            return marca != null;
+        }
+
+        public async Task<bool> ExisteCategoriaAsync(int idCategoria, CancellationToken ct = default)
+        {
+            var categoria = await _unitOfWork.Categorias.GetByIdAsync(idCategoria, ct);
+            return categoria != null;
+        }
+
+        public async Task<bool> ExisteLocalizacionAsync(int idLocalizacion, CancellationToken ct = default)
+        {
+            var localizacion = await _unitOfWork.Localizaciones.GetByIdAsync(idLocalizacion, ct);
+            return localizacion != null;
         }
     }
 }

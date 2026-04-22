@@ -30,25 +30,25 @@ namespace Booking.Autos.Business.Services
             if (errors.Any())
                 throw new ValidationException(errors.ToList());
 
+            var marcaExiste = await _vehiculoDataService.ExisteMarcaAsync(request.IdMarca, ct);
+            var categoriaExiste = await _vehiculoDataService.ExisteCategoriaAsync(request.IdCategoria, ct);
+            var localizacionExiste = await _vehiculoDataService.ExisteLocalizacionAsync(request.IdLocalizacion, ct);
+
+            var fkErrors = VehiculoValidator.ValidarRelaciones(marcaExiste, categoriaExiste, localizacionExiste);
+            if (fkErrors.Any())
+                throw new ValidationException(fkErrors.ToList());
+
+            // ✅ 3. validar placa duplicada
             var existente = await _vehiculoDataService.GetByPlacaAsync(request.Placa, ct);
-
             if (existente is not null)
-                throw new ValidationException(new List<string>
-        {
-            "Ya existe un vehículo con esa placa."
-        });
+                throw new ValidationException(new List<string> { "Ya existe un vehículo con esa placa." });
 
+            // ✅ 4. crear
             var dataModel = VehiculoBusinessMapper.ToDataModel(request);
-
-            // 🔥 OBLIGATORIO
             dataModel.Guid = Guid.NewGuid();
-            dataModel.CodigoInterno = $"VEH-{DateTime.UtcNow.Ticks}";
-            dataModel.Estado = "DIS";
-            dataModel.FechaRegistroUtc = DateTime.UtcNow;
-            dataModel.EsEliminado = false;
+            dataModel.CodigoInterno = $"VEH-{Guid.NewGuid().ToString("N")[..12].ToUpper()}";
 
             var creado = await _vehiculoDataService.CreateAsync(dataModel, ct);
-
             return VehiculoBusinessMapper.ToResponse(creado);
         }
 
@@ -71,9 +71,9 @@ namespace Booking.Autos.Business.Services
 
             if (porPlaca is not null && porPlaca.Id != request.Id)
                 throw new ValidationException(new List<string>
-        {
+            {
             "La placa ya está en uso."
-        });
+            });
 
             var dataModel = VehiculoBusinessMapper.ToDataModel(request);
 
@@ -104,8 +104,10 @@ namespace Booking.Autos.Business.Services
         public async Task<VehiculoResponse?> ObtenerPorPlacaAsync(string placa, CancellationToken cancellationToken = default)
         {
             var vehiculo = await _vehiculoDataService.GetByPlacaAsync(placa, cancellationToken);
+            if(vehiculo is null)
+                throw new NotFoundException("No se encontró el vehículo.");
 
-            return vehiculo is null ? null : VehiculoBusinessMapper.ToResponse(vehiculo);
+            return VehiculoBusinessMapper.ToResponse(vehiculo);
         }
 
         public async Task<IReadOnlyList<VehiculoResponse>> ListarAsync(CancellationToken cancellationToken = default)
@@ -164,17 +166,13 @@ namespace Booking.Autos.Business.Services
 
         public async Task<IReadOnlyList<VehiculoResponse>> ObtenerPorRangoPrecioAsync(decimal min, decimal max, CancellationToken cancellationToken = default)
         {
+            if (min < 0 || max < 0)
+                throw new ValidationException(new List<string> { "Los precios no pueden ser negativos." });
             var list = await _vehiculoDataService.GetByRangoPrecioAsync(min, max, cancellationToken);
             return list.Select(VehiculoBusinessMapper.ToResponse).ToList();
         }
 
-        // =========================
-        // DISPONIBILIDAD
-        // =========================
-        public async Task<bool> VerificarDisponibilidadAsync(int idVehiculo, DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken = default)
-        {
-            return await _vehiculoDataService.IsDisponibleAsync(idVehiculo, fechaInicio, fechaFin, cancellationToken);
-        }
+        
 
         // =========================
         // OPERACIONES ESPECIALES
@@ -192,6 +190,14 @@ namespace Booking.Autos.Business.Services
 
         public async Task<bool> ActualizarEstadoAsync(int id, string estado, CancellationToken cancellationToken = default)
         {
+            if (id <= 0)
+                throw new ValidationException(new List<string> { "El id del vehículo es inválido." });
+
+            var errors = VehiculoValidator.ValidarEstado(estado);
+
+            if (errors.Any())
+                throw new ValidationException(errors.ToList());
+
             return await _vehiculoDataService.UpdateEstadoAsync(id, estado, cancellationToken);
         }
 

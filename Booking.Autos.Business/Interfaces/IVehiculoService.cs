@@ -63,15 +63,7 @@ namespace Booking.Autos.Business.Interfaces
             decimal max,
             CancellationToken cancellationToken = default);
 
-        // =========================
-        // DISPONIBILIDAD 🔥🔥
-        // =========================
-
-        Task<bool> VerificarDisponibilidadAsync(
-            int idVehiculo,
-            DateTime fechaInicio,
-            DateTime fechaFin,
-            CancellationToken cancellationToken = default);
+        
 
         // =========================
         // OPERACIONES ESPECIALES 🔥

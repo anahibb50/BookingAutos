@@ -157,20 +157,7 @@ namespace Booking.Autos.API.Controllers.V1
             return Ok(ApiResponse<IReadOnlyList<VehiculoResponse>>.Ok(result));
         }
 
-        // ============================================================
-        // 🔥 DISPONIBILIDAD
-        // ============================================================
-        [HttpGet("{id}/disponibilidad")]
-        public async Task<IActionResult> VerificarDisponibilidad(
-            int id,
-            [FromQuery] DateTime fechaInicio,
-            [FromQuery] DateTime fechaFin,
-            CancellationToken ct)
-        {
-            var disponible = await _vehiculoService.VerificarDisponibilidadAsync(id, fechaInicio, fechaFin, ct);
-
-            return Ok(ApiResponse<bool>.Ok(disponible));
-        }
+       
 
         // ============================================================
         // 🔥 OPERACIONES ESPECIALES

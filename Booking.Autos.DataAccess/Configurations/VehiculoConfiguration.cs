@@ -95,13 +95,11 @@ namespace Booking.Autos.DataAccess.Configurations
                 .IsUnicode(false);
 
             builder.Property(e => e.aire_acondicionado)
-                .IsRequired()
-                .HasDefaultValue(true);
+                .IsRequired();
 
             // Auditoría y Concurrencia
             builder.Property(e => e.es_eliminado)
-                .IsRequired()
-                .HasDefaultValue(false);
+                .IsRequired();
 
             builder.Property(e => e.fecha_registro_utc)
                 .IsRequired()

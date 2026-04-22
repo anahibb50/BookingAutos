@@ -45,15 +45,6 @@ namespace Booking.Autos.DataManagement.Interfaces
             decimal max,
             CancellationToken cancellationToken = default);
 
-        // =========================
-        // DISPONIBILIDAD 🔥
-        // =========================
-
-        Task<bool> IsDisponibleAsync(
-            int idVehiculo,
-            DateTime fechaInicio,
-            DateTime fechaFin,
-            CancellationToken cancellationToken = default);
 
         // =========================
         // ESCRITURA
@@ -92,5 +83,9 @@ namespace Booking.Autos.DataManagement.Interfaces
         Task<bool> ExistsByPlacaAsync(
             string placa,
             CancellationToken cancellationToken = default);
+
+        Task<bool> ExisteMarcaAsync(int idMarca, CancellationToken ct = default);
+        Task<bool> ExisteCategoriaAsync(int idCategoria, CancellationToken ct = default);
+        Task<bool> ExisteLocalizacionAsync(int idLocalizacion, CancellationToken ct = default);
     }
 }

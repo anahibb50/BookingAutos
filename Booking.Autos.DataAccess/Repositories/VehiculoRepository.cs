@@ -21,7 +21,7 @@ namespace Booking.Autos.DataAccess.Repositories
         public async Task<IEnumerable<VehiculoEntity>> GetAllAsync(CancellationToken cancellationToken = default)
         {
             return await _context.Vehiculos
-                .AsNoTracking()
+
                 .Where(x => !x.es_eliminado)
                 .ToListAsync(cancellationToken);
         }
@@ -92,12 +92,15 @@ namespace Booking.Autos.DataAccess.Repositories
 
         public async Task AddAsync(VehiculoEntity vehiculo, CancellationToken cancellationToken = default)
         {
-            vehiculo.vehiculo_guid = Guid.NewGuid();
-            vehiculo.fecha_registro_utc = DateTime.UtcNow;
+            if (vehiculo.vehiculo_guid == Guid.Empty)
+                vehiculo.vehiculo_guid = Guid.NewGuid();
+
+            if (vehiculo.fecha_registro_utc == default)
+                vehiculo.fecha_registro_utc = DateTime.UtcNow;
+
             vehiculo.es_eliminado = false;
 
             await _context.Vehiculos.AddAsync(vehiculo, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
         }
 
         public async Task UpdateAsync(VehiculoEntity vehiculo, CancellationToken cancellationToken = default)
