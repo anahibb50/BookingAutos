@@ -26,6 +26,6 @@
         public string Correo { get; set; }
 
         // 🟢 Estado
-        public string Estado { get; set; }
+        public string Estado { get; set; } = "ACT";
     }
 }

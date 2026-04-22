@@ -46,5 +46,7 @@ namespace Booking.Autos.DataManagement.Interfaces
             int id,
             decimal nuevoPrecio,
             CancellationToken cancellationToken = default);
+
+     
     }
 }

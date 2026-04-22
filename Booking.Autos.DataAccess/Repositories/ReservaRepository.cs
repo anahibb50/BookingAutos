@@ -97,12 +97,24 @@ namespace Booking.Autos.DataAccess.Repositories
         public async Task AddAsync(ReservaEntity reserva, CancellationToken cancellationToken = default)
         {
             reserva.guid_reserva = Guid.NewGuid();
+            reserva.codigo_reserva = $"RES-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpper()}";
             reserva.fecha_reserva_utc = DateTime.UtcNow;
             reserva.estado_reserva = "PEN";
+
             reserva.es_eliminado = false;
 
             await _context.Reservas.AddAsync(reserva, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
+            
+            try
+            {
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                // Pon un breakpoint aquí o loggea esto
+                var innerMessage = ex.InnerException?.Message ?? ex.Message;
+                throw new Exception($"ERROR REAL: {innerMessage}", ex);
+            }
         }
 
         public async Task UpdateAsync(ReservaEntity reserva, CancellationToken cancellationToken = default)

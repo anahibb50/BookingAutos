@@ -41,8 +41,6 @@ namespace Booking.Autos.API.Middleware
 
             switch (ex)
             {
-                // 🔴 VALIDACIONES
-                // ✅ ESTO ES LO CORRECTO
                 case ValidationException validationEx:
                     statusCode = HttpStatusCode.BadRequest;
                     response = new ApiErrorResponse(
@@ -51,21 +49,23 @@ namespace Booking.Autos.API.Middleware
                     );
                     break;
 
-                // 🔐 AUTH
-                case UnauthorizedBusinessException unauthorizedEx:
-                    statusCode = HttpStatusCode.Unauthorized;
-
-                    response = new ApiErrorResponse(
-                        unauthorizedEx.Message
-                    );
+                case NotFoundException notFoundEx:
+                    statusCode = HttpStatusCode.NotFound;
+                    response = new ApiErrorResponse(notFoundEx.Message);
                     break;
 
-                // ❗ OTROS
+                case UnauthorizedBusinessException unauthorizedEx:
+                    statusCode = HttpStatusCode.Unauthorized;
+                    response = new ApiErrorResponse(unauthorizedEx.Message);
+                    break;
+
+                case BusinessException businessEx:
+                    statusCode = HttpStatusCode.BadRequest;
+                    response = new ApiErrorResponse(businessEx.Message);
+                    break;
+
                 default:
-                    response = new ApiErrorResponse(
-                        ex.Message, // 🔥 mensaje real
-                        new List<string> { ex.StackTrace ?? "Sin stacktrace" } // 🔥 detalle
-                    );
+                    response = new ApiErrorResponse(ex.Message);
                     break;
             }
 

@@ -9,7 +9,7 @@ namespace Booking.Autos.API.Controllers.V1
 {
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/extras")]
+    [Route("api/v1/extras")]
     [Authorize]
     public class ExtraController : ControllerBase
     {

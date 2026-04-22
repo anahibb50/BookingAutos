@@ -39,15 +39,8 @@ namespace Booking.Autos.DataManagement.Services
 
         public async Task<ClienteDataModel?> GetByIdentificacionAsync(string identificacion, CancellationToken ct = default)
         {
-            var clientes = await _unitOfWork.Clientes.GetAllAsync(ct);
-
-            var entity = clientes.FirstOrDefault(x =>
-                x.cli_ruc_ced == identificacion &&
-                !x.es_eliminado);
-
-            if (entity == null)
-                return null;
-
+            var entity = await _unitOfWork.Clientes.GetByIdentificacionAsync(identificacion, ct);
+            if (entity == null) return null;
             return ClienteDataMapper.ToDataModel(entity);
         }
 
@@ -67,8 +60,17 @@ namespace Booking.Autos.DataManagement.Services
             if (!string.IsNullOrWhiteSpace(filtro.Identificacion))
                 query = query.Where(x => x.cli_ruc_ced.Contains(filtro.Identificacion));
 
+            if (!string.IsNullOrWhiteSpace(filtro.TipoIdentificacion))
+                query = query.Where(x => x.tipo_identificacion == filtro.TipoIdentificacion);
+
             if (filtro.IdCiudad.HasValue)
                 query = query.Where(x => x.id_ciudad == filtro.IdCiudad.Value);
+
+            if (!string.IsNullOrWhiteSpace(filtro.Estado))
+                query = query.Where(x => x.cli_estado == filtro.Estado);
+
+            if (!string.IsNullOrWhiteSpace(filtro.Email))
+                query = query.Where(x => x.cli_email != null && x.cli_email.Contains(filtro.Email));
 
             // 📊 TOTAL
             var totalRecords = query.Count();
@@ -101,11 +103,14 @@ namespace Booking.Autos.DataManagement.Services
             entity.cliente_guid = Guid.NewGuid();
             entity.fecha_registro_utc = DateTime.UtcNow;
             entity.es_eliminado = false;
+            entity.creado_por_usuario = string.IsNullOrWhiteSpace(model.CreadoPorUsuario) ? "SYSTEM" : model.CreadoPorUsuario;
+            entity.servicio_origen = string.IsNullOrWhiteSpace(model.ServicioOrigen) ? "API" : model.ServicioOrigen;
+            entity.cli_estado = string.IsNullOrWhiteSpace(model.Estado) ? "ACT" : model.Estado;
 
-            await _unitOfWork.Clientes.AddAsync(entity);
-            await _unitOfWork.SaveChangesAsync(ct);
+            await _unitOfWork.Clientes.AddAsync(entity,ct);
 
-            return ClienteDataMapper.ToDataModel(entity);
+            var creado = await _unitOfWork.Clientes.GetByIdAsync(entity.id_cliente, ct);
+            return ClienteDataMapper.ToDataModel(creado!);
         }
 
         public async Task<ClienteDataModel> UpdateAsync(ClienteDataModel model, CancellationToken ct = default)
@@ -113,7 +118,7 @@ namespace Booking.Autos.DataManagement.Services
             var existing = await _unitOfWork.Clientes.GetByIdAsync(model.Id);
 
             if (existing == null)
-                throw new Exception("Cliente no encontrado");
+                throw new InvalidOperationException($"Cliente no encontrado: {model.Id}");
 
             existing.cli_nombre = model.Nombre;
             existing.cli_apellido = model.Apellido;
@@ -131,13 +136,15 @@ namespace Booking.Autos.DataManagement.Services
 
             existing.cli_estado = model.Estado;
 
+            existing.es_eliminado = model.EsEliminado;
+            existing.fecha_eliminacion = model.FechaEliminacion;
             existing.modificado_por_usuario = model.ModificadoPorUsuario;
             existing.fecha_modificacion_utc = DateTime.UtcNow;
             existing.modificacion_ip = model.ModificacionIp;
             existing.servicio_origen = model.ServicioOrigen;
 
-            await _unitOfWork.Clientes.UpdateAsync(existing);
-            await _unitOfWork.SaveChangesAsync(ct);
+            await _unitOfWork.Clientes.UpdateAsync(existing, ct);
+            
 
             return ClienteDataMapper.ToDataModel(existing);
         }
@@ -152,8 +159,8 @@ namespace Booking.Autos.DataManagement.Services
             entity.es_eliminado = true;
             entity.fecha_eliminacion = DateTime.UtcNow;
 
-            await _unitOfWork.Clientes.UpdateAsync(entity);
-            await _unitOfWork.SaveChangesAsync(ct);
+            await _unitOfWork.Clientes.UpdateAsync(entity,ct);
+            
 
             return true;
         }
@@ -164,11 +171,7 @@ namespace Booking.Autos.DataManagement.Services
 
         public async Task<bool> ExistsByIdentificacionAsync(string identificacion, CancellationToken ct = default)
         {
-            var clientes = await _unitOfWork.Clientes.GetAllAsync(ct);
-
-            return clientes.Any(x =>
-                x.cli_ruc_ced == identificacion &&
-                !x.es_eliminado);
+            return await _unitOfWork.Clientes.ExistsByIdentificacionAsync(identificacion, ct);
         }
     }
 }

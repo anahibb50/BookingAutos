@@ -10,7 +10,7 @@ namespace Booking.Autos.API.Controllers.V1.Catalogos
 {
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/ciudades")]
+    [Route("api/v1/ciudades")]
     [Authorize]
     public class CiudadController : ControllerBase
     {

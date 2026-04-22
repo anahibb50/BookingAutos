@@ -27,13 +27,36 @@ namespace Booking.Autos.Business.Validators
                 errors.Add("El tipo de identificación es obligatorio.");
 
             if (!string.IsNullOrWhiteSpace(request.TipoIdentificacion) &&
-                request.TipoIdentificacion != "CED" &&
+                request.TipoIdentificacion != "CEDULA" &&
                 request.TipoIdentificacion != "RUC" &&
-                request.TipoIdentificacion != "PAS")
+                request.TipoIdentificacion != "PASAPORTE")
                 errors.Add("El tipo de identificación es inválido.");
 
-            if (string.IsNullOrWhiteSpace(request.Identificacion))
-                errors.Add("La identificación es obligatoria.");
+            if (!string.IsNullOrWhiteSpace(request.Identificacion) &&
+                !string.IsNullOrWhiteSpace(request.TipoIdentificacion))
+            {
+                switch (request.TipoIdentificacion)
+                {
+                    case "CEDULA":
+                        if (request.Identificacion.Length != 10)
+                            errors.Add("La cédula debe tener exactamente 10 dígitos.");
+                        if (!request.Identificacion.All(char.IsDigit))
+                            errors.Add("La cédula solo debe contener números.");
+                        break;
+
+                    case "RUC":
+                        if (request.Identificacion.Length != 13)
+                            errors.Add("El RUC debe tener exactamente 13 dígitos.");
+                        if (!request.Identificacion.All(char.IsDigit))
+                            errors.Add("El RUC solo debe contener números.");
+                        break;
+
+                    case "PASAPORTE":
+                        if (request.Identificacion.Length < 5 || request.Identificacion.Length > 20)
+                            errors.Add("El pasaporte debe tener entre 5 y 20 caracteres.");
+                        break;
+                }
+            }
 
             // =========================
             // CIUDAD
@@ -101,9 +124,9 @@ namespace Booking.Autos.Business.Validators
                 errors.Add("El tipo de identificación es obligatorio.");
 
             if (!string.IsNullOrWhiteSpace(request.TipoIdentificacion) &&
-                request.TipoIdentificacion != "CED" &&
+                request.TipoIdentificacion != "CEDULA" &&
                 request.TipoIdentificacion != "RUC" &&
-                request.TipoIdentificacion != "PAS")
+                request.TipoIdentificacion != "PASAPORTE")
                 errors.Add("El tipo de identificación es inválido.");
 
             if (string.IsNullOrWhiteSpace(request.Identificacion))

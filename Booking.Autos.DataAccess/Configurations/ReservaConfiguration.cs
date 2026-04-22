@@ -25,7 +25,7 @@ namespace Booking.Autos.DataAccess.Configurations
 
             builder.Property(e => e.codigo_reserva)
                 .IsRequired()
-                .HasMaxLength(20)
+                .HasMaxLength(50)
                 .IsUnicode(false);
 
             // Fechas y Horas

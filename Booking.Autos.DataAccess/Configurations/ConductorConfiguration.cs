@@ -25,7 +25,7 @@ namespace Booking.Autos.DataAccess.Configurations
 
             builder.Property(e => e.codigo_conductor)
                 .IsRequired()
-                .HasMaxLength(20)
+                .HasMaxLength(50)
                 .IsUnicode(false);
             builder.HasIndex(e => e.codigo_conductor).IsUnique().HasDatabaseName("UQ_CONDUCTORES_CODIGO");
 

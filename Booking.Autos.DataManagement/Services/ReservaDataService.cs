@@ -125,15 +125,12 @@ namespace Booking.Autos.DataManagement.Services
 
             var entity = ReservaDataMapper.ToEntity(model);
 
-            entity.guid_reserva = Guid.NewGuid();
-            entity.fecha_reserva_utc = DateTime.UtcNow;
-            entity.estado_reserva = "PEN";
-            entity.es_eliminado = false;
+            
 
             entity.cantidad_dias = (int)(entity.fecha_fin - entity.fecha_inicio).TotalDays;
 
             await _unitOfWork.Reservas.AddAsync(entity, ct);
-            await _unitOfWork.SaveChangesAsync(ct);
+            
 
             return ReservaDataMapper.ToDataModel(entity);
         }

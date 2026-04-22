@@ -2,6 +2,7 @@
 using Booking.Autos.Business.Exceptions;
 using Booking.Autos.Business.Interfaces;
 using Booking.Autos.Business.Mappers;
+using Booking.Autos.Business.Validators;
 using Booking.Autos.DataManagement.Interfaces;
 using Booking.Autos.DataManagement.Models.Clientes;
 using Booking.Autos.DataManagement.Common;
@@ -11,10 +12,14 @@ namespace Booking.Autos.Business.Services
     public class ClienteService : IClienteService
     {
         private readonly IClienteDataService _clienteDataService;
+        private readonly ICiudadDataService _ciudadDataService;
 
-        public ClienteService(IClienteDataService clienteDataService)
+        public ClienteService(
+            IClienteDataService clienteDataService,
+            ICiudadDataService ciudadDataService)
         {
             _clienteDataService = clienteDataService;
+            _ciudadDataService = ciudadDataService;
         }
 
         // =========================
@@ -24,11 +29,10 @@ namespace Booking.Autos.Business.Services
             CrearClienteRequest request,
             CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(request.Nombre))
-                throw new ValidationException(new List<string> { "El nombre es obligatorio." });
+            var errors = ClienteValidator.ValidarCreacion(request);
 
-            if (string.IsNullOrWhiteSpace(request.Identificacion))
-                throw new ValidationException(new List<string> { "La identificación es obligatoria." });
+            if (errors.Any())
+                throw new ValidationException(errors.ToList());
 
             var existe = await _clienteDataService
                 .ExistsByIdentificacionAsync(request.Identificacion, cancellationToken);
@@ -36,7 +40,14 @@ namespace Booking.Autos.Business.Services
             if (existe)
                 throw new ValidationException(new List<string> { "Ya existe un cliente con esa identificación." });
 
+            var ciudad = await _ciudadDataService.GetByIdAsync(request.IdCiudad, cancellationToken);
+
+            if (ciudad is null)
+                throw new ValidationException(new List<string> { $"No existe la ciudad con id {request.IdCiudad}." });
+
             var model = ClienteBusinessMapper.ToDataModel(request);
+            model.CreadoPorUsuario = "SYSTEM";
+            model.ServicioOrigen = "API";
 
             var creado = await _clienteDataService
                 .CreateAsync(model, cancellationToken);
@@ -51,8 +62,10 @@ namespace Booking.Autos.Business.Services
             ActualizarClienteRequest request,
             CancellationToken cancellationToken = default)
         {
-            if (request.Id <= 0)
-                throw new ValidationException(new List<string> { "Id inválido." });
+            var errors = ClienteValidator.ValidarActualizacion(request);
+
+            if (errors.Any())
+                throw new ValidationException(errors.ToList());
 
             var existente = await _clienteDataService
                 .GetByIdAsync(request.Id, cancellationToken);
@@ -66,12 +79,21 @@ namespace Booking.Autos.Business.Services
             if (existe && existente.Identificacion != request.Identificacion)
                 throw new ValidationException(new List<string> { "Ya existe otro cliente con esa identificación." });
 
+            var ciudad = await _ciudadDataService.GetByIdAsync(request.IdCiudad, cancellationToken);
+
+            if (ciudad is null)
+                throw new ValidationException(new List<string> { $"No existe la ciudad con id {request.IdCiudad}." });
+
             var model = ClienteBusinessMapper.ToDataModel(request);
 
             // 🔥 conservar datos importantes
             model.Guid = existente.Guid;
             model.FechaRegistroUtc = existente.FechaRegistroUtc;
+            model.CreadoPorUsuario = existente.CreadoPorUsuario;
+            model.ServicioOrigen = existente.ServicioOrigen;
             model.EsEliminado = existente.EsEliminado;
+            model.ModificadoPorUsuario = "SYSTEM";
+            model.ModificacionIp = "127.0.0.1";
 
             var actualizado = await _clienteDataService
                 .UpdateAsync(model, cancellationToken);
@@ -95,6 +117,8 @@ namespace Booking.Autos.Business.Services
 
             existente.EsEliminado = true;
             existente.FechaEliminacion = DateTime.UtcNow;
+            existente.ModificadoPorUsuario = usuario;
+            existente.ModificacionIp = "127.0.0.1";
 
             await _clienteDataService.UpdateAsync(existente, cancellationToken);
         }
@@ -125,8 +149,8 @@ namespace Booking.Autos.Business.Services
             var cliente = await _clienteDataService
                 .GetByIdentificacionAsync(identificacion, cancellationToken);
 
-            if (cliente is null)
-                return null;
+            if (cliente == null)
+                throw new NotFoundException("Cliente no encontrado", identificacion);
 
             return ClienteBusinessMapper.ToResponse(cliente);
         }

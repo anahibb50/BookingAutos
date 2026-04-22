@@ -29,7 +29,6 @@ namespace Booking.Autos.DataAccess.Repositories
         public async Task<ConductorEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             return await _context.Conductores
-                .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.id_conductor == id && !x.es_eliminado, cancellationToken);
         }
 
@@ -61,11 +60,21 @@ namespace Booking.Autos.DataAccess.Repositories
         public async Task AddAsync(ConductorEntity conductor, CancellationToken cancellationToken = default)
         {
             conductor.conductor_guid = Guid.NewGuid();
+            conductor.codigo_conductor = $"CON-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpper()}";
             conductor.fecha_registro_utc = DateTime.UtcNow;
             conductor.es_eliminado = false;
 
             await _context.Conductores.AddAsync(conductor, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
+            
+            try
+            {
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                var innerMessage = ex.InnerException?.Message ?? ex.Message;
+                throw new Exception($"ERROR REAL CONDUCTOR: {innerMessage}", ex);
+            }
         }
 
         public async Task UpdateAsync(ConductorEntity conductor, CancellationToken cancellationToken = default)

@@ -9,7 +9,7 @@ namespace Booking.Autos.API.Controllers.V1
 {
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/localizaciones")]
+    [Route("api/v1/localizaciones")]
     [Authorize]
     public class LocalizacionController : ControllerBase
     {

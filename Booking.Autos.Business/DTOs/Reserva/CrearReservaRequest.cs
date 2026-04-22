@@ -26,6 +26,6 @@ namespace Booking.Autos.Business.DTOs.Reserva
 
         // 🔥 DETALLES
         public List<CrearReservaExtraDetalleRequest>? Extras { get; set; }
-        public List<CrearConductorReservaDetalleRequest>? Conductores { get; set; }
+        public List<CrearConductorReservaDetalleRequest> Conductores { get; set; }
     }
 }

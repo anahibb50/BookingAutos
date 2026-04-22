@@ -94,7 +94,7 @@ namespace Booking.Autos.DataAccess.Configurations
                 .IsUnicode(false);
 
             builder.Property(e => e.fecha_modificacion_utc)
-                .IsRequired()
+                .IsRequired(false)
                 .HasDefaultValueSql("GETUTCDATE()");
 
             builder.Property(e => e.modificacion_ip)

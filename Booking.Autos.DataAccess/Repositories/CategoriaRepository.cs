@@ -27,7 +27,6 @@ namespace Booking.Autos.DataAccess.Repositories
         public async Task<CategoriaEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             return await _context.Categorias
-                .AsNoTracking()
                 .FirstOrDefaultAsync(c => c.id_categoria == id && !c.es_eliminado, cancellationToken);
         }
 
@@ -55,24 +54,22 @@ namespace Booking.Autos.DataAccess.Repositories
 
         public async Task UpdateAsync(CategoriaEntity categoria, CancellationToken cancellationToken = default)
         {
-            _context.Entry(categoria).State = EntityState.Modified;
-
-            _context.Entry(categoria).Property(x => x.fecha_creacion).IsModified = false;
-            _context.Entry(categoria).Property(x => x.categoria_guid).IsModified = false;
-
+            // ✅ Buscar con tracking y actualizar solo los campos necesarios
             categoria.fecha_actualizacion = DateTime.UtcNow;
+
 
             await _context.SaveChangesAsync(cancellationToken);
         }
 
         public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
         {
-            var categoria = new CategoriaEntity { id_categoria = id };
+            var existing = await _context.Categorias
+                .FirstOrDefaultAsync(c => c.id_categoria == id && !c.es_eliminado, cancellationToken);
 
-            _context.Categorias.Attach(categoria);
+            if (existing == null) return;
 
-            categoria.es_eliminado = true;
-            categoria.fecha_eliminacion = DateTime.UtcNow;
+            existing.es_eliminado = true;
+            existing.fecha_eliminacion = DateTime.UtcNow;
 
             await _context.SaveChangesAsync(cancellationToken);
         }

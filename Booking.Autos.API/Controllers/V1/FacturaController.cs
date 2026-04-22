@@ -10,7 +10,7 @@ namespace Booking.Autos.API.Controllers.V1
 {
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/facturas")]
+    [Route("api/v1/facturas")]
     [Authorize]
     public class FacturaController : ControllerBase
     {

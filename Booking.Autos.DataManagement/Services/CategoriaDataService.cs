@@ -56,17 +56,18 @@ namespace Booking.Autos.DataManagement.Services
 
         public async Task<CategoriaDataModel> UpdateAsync(CategoriaDataModel model, CancellationToken ct = default)
         {
-            var existing = await _unitOfWork.Categorias.GetByIdAsync(model.Id);
-
+            // 1️⃣ Busca con tracking
+            var existing = await _unitOfWork.Categorias.GetByIdAsync(model.Id, ct);
             if (existing == null)
                 throw new Exception("Categoría no encontrada");
 
-            // 🔥 Actualizar solo campos editables
+            // 2️⃣ Modifica campos
             existing.nombre_categoria = model.Nombre;
-            existing.fecha_actualizacion = DateTime.UtcNow;
+            existing.es_eliminado = model.EsEliminado;
+            existing.fecha_eliminacion = model.FechaEliminacion;
 
-            _unitOfWork.Categorias.UpdateAsync(existing);
-            await _unitOfWork.SaveChangesAsync(ct);
+            // 3️⃣ Repository solo guarda
+            await _unitOfWork.Categorias.UpdateAsync(existing, ct);
 
             return CategoriaDataMapper.ToDataModel(existing);
         }

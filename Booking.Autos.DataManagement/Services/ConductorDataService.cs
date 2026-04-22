@@ -30,7 +30,7 @@ namespace Booking.Autos.DataManagement.Services
 
         public async Task<ConductorDataModel?> GetByIdAsync(int id, CancellationToken ct = default)
         {
-            var entity = await _unitOfWork.Conductores.GetByIdAsync(id);
+            var entity = await _unitOfWork.Conductores.GetByIdAsync(id, ct);
 
             return entity == null
                 ? null
@@ -168,9 +168,10 @@ namespace Booking.Autos.DataManagement.Services
 
             existing.origen_registro = model.OrigenRegistro;
             existing.motivo_inhabilitacion = model.MotivoInhabilitacion;
+            existing.es_eliminado = model.EsEliminado;
+            existing.fecha_inhabilitacion_utc = model.FechaInhabilitacionUtc;
 
-            await _unitOfWork.Conductores.UpdateAsync(existing);
-            await _unitOfWork.SaveChangesAsync(ct);
+            await _unitOfWork.Conductores.UpdateAsync(existing,ct);
 
             return ConductorDataMapper.ToDataModel(existing);
         }
@@ -186,7 +187,6 @@ namespace Booking.Autos.DataManagement.Services
             entity.fecha_inhabilitacion_utc = DateTime.UtcNow;
 
             await _unitOfWork.Conductores.UpdateAsync(entity);
-            await _unitOfWork.SaveChangesAsync(ct);
 
             return true;
         }
@@ -195,26 +195,14 @@ namespace Booking.Autos.DataManagement.Services
         // VALIDACIONES
         // =========================
 
-        public async Task<bool> ExistsByIdentificacionAsync(
-            string identificacion,
-            CancellationToken ct = default)
+        public async Task<bool> ExistsByIdentificacionAsync(string identificacion, CancellationToken ct = default)
         {
-            var conductores = await _unitOfWork.Conductores.GetAllAsync(ct);
-
-            return conductores.Any(x =>
-                x.numero_identificacion == identificacion &&
-                !x.es_eliminado);
+            return await _unitOfWork.Conductores.ExistsByCedulaAsync(identificacion, ct);
         }
 
-        public async Task<bool> ExistsByLicenciaAsync(
-            string numeroLicencia,
-            CancellationToken ct = default)
+        public async Task<bool> ExistsByLicenciaAsync(string numeroLicencia, CancellationToken ct = default)
         {
-            var conductores = await _unitOfWork.Conductores.GetAllAsync(ct);
-
-            return conductores.Any(x =>
-                x.numero_licencia == numeroLicencia &&
-                !x.es_eliminado);
+            return await _unitOfWork.Conductores.ExistsByLicenciaAsync(numeroLicencia, ct);
         }
     }
 }

@@ -2,9 +2,10 @@
 using Booking.Autos.Business.Exceptions;
 using Booking.Autos.Business.Interfaces;
 using Booking.Autos.Business.Mappers;
+using Booking.Autos.Business.Validators;
+using Booking.Autos.DataManagement.Common;
 using Booking.Autos.DataManagement.Interfaces;
 using Booking.Autos.DataManagement.Models.Conductores;
-using Booking.Autos.DataManagement.Common;
 
 namespace Booking.Autos.Business.Services
 {
@@ -24,29 +25,38 @@ namespace Booking.Autos.Business.Services
             CrearConductorRequest request,
             CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(request.NumeroIdentificacion))
-                throw new ValidationException(new List<string> { "La identificación es obligatoria." });
+            // 🔥 VALIDACIONES CENTRALIZADAS (AQUÍ ESTÁ LA CLAVE)
+            var errors = ConductorValidator.ValidarCreacion(request);
 
-            if (string.IsNullOrWhiteSpace(request.NumeroLicencia))
-                throw new ValidationException(new List<string> { "La licencia es obligatoria." });
+            if (errors.Any())
+                throw new ValidationException(errors.ToList());
 
-            // 🔍 validaciones
+            // 🔍 VALIDACIONES DE NEGOCIO (BD)
             if (await _conductorDataService.ExistsByIdentificacionAsync(request.NumeroIdentificacion, cancellationToken))
-                throw new ValidationException(new List<string> { "Ya existe un conductor con esa identificación." });
+                throw new ValidationException(new List<string>
+                {
+                    "Ya existe un conductor con esa identificación."
+                });
 
-            if (await _conductorDataService.ExistsByLicenciaAsync(request.NumeroLicencia, cancellationToken))
-                throw new ValidationException(new List<string> { "Ya existe un conductor con esa licencia." });
+                    if (await _conductorDataService.ExistsByLicenciaAsync(request.NumeroLicencia, cancellationToken))
+                        throw new ValidationException(new List<string>
+                {
+                    "Ya existe un conductor con esa licencia."
+                });
 
+            // 🔹 MAPEO
             var model = ConductorBusinessMapper.ToDataModel(request);
 
-            // 🔥 completar campos faltantes de BD
+            // 🔹 CAMPOS AUTOMÁTICOS
             model.Estado = "ACT";
             model.EsEliminado = false;
             model.CreadoPorUsuario = "SYSTEM";
             model.OrigenRegistro = "API";
 
+            // 🔹 GUARDAR
             var creado = await _conductorDataService.CreateAsync(model, cancellationToken);
 
+            // 🔹 RESPUESTA
             return ConductorBusinessMapper.ToResponse(creado);
         }
 
@@ -57,31 +67,44 @@ namespace Booking.Autos.Business.Services
             ActualizarConductorRequest request,
             CancellationToken cancellationToken = default)
         {
-            if (request.Id <= 0)
-                throw new ValidationException(new List<string> { "Id inválido." });
+            // 🔥 VALIDACIONES CENTRALIZADAS
+            var errors = ConductorValidator.ValidarActualizacion(request);
 
+            if (errors.Any())
+                throw new ValidationException(errors.ToList());
+
+            // 🔍 EXISTENCIA
             var existente = await _conductorDataService
                 .GetByIdAsync(request.Id, cancellationToken);
 
             if (existente is null)
                 throw new NotFoundException("Conductor", request.Id);
 
-            // 🔍 validaciones duplicados
-            if (await _conductorDataService.ExistsByIdentificacionAsync(request.NumeroIdentificacion, cancellationToken)
+            // 🔍 VALIDACIONES DE NEGOCIO (DUPLICADOS)
+            if (await _conductorDataService.ExistsByIdentificacionAsync(
+                    request.NumeroIdentificacion, cancellationToken)
                 && existente.NumeroIdentificacion != request.NumeroIdentificacion)
             {
-                throw new ValidationException(new List<string> { "Ya existe otro conductor con esa identificación." });
+                throw new ValidationException(new List<string>
+            {
+                "Ya existe otro conductor con esa identificación."
+            });
             }
 
-            if (await _conductorDataService.ExistsByLicenciaAsync(request.NumeroLicencia, cancellationToken)
+            if (await _conductorDataService.ExistsByLicenciaAsync(
+                    request.NumeroLicencia, cancellationToken)
                 && existente.NumeroLicencia != request.NumeroLicencia)
             {
-                throw new ValidationException(new List<string> { "Ya existe otro conductor con esa licencia." });
+                throw new ValidationException(new List<string>
+            {
+                "Ya existe otro conductor con esa licencia."
+            });
             }
 
+            // 🔹 MAPEO
             var model = ConductorBusinessMapper.ToDataModel(request);
 
-            // 🔥 conservar datos críticos
+            // 🔥 CONSERVAR DATOS IMPORTANTES
             model.Guid = existente.Guid;
             model.Codigo = existente.Codigo;
             model.FechaRegistroUtc = existente.FechaRegistroUtc;
@@ -89,10 +112,11 @@ namespace Booking.Autos.Business.Services
             model.CreadoPorUsuario = existente.CreadoPorUsuario;
             model.OrigenRegistro = existente.OrigenRegistro;
 
-            // 🔥 auditoría
+            // 🔥 AUDITORÍA
             model.ModificadoPorUsuario = "SYSTEM";
             model.ModificadoDesdeIp = "127.0.0.1";
 
+            // 🔹 ACTUALIZAR
             var actualizado = await _conductorDataService.UpdateAsync(model, cancellationToken);
 
             return ConductorBusinessMapper.ToResponse(actualizado);
@@ -146,20 +170,26 @@ namespace Booking.Autos.Business.Services
             var conductor = await _conductorDataService
                 .GetByIdentificacionAsync(identificacion, cancellationToken);
 
-            return conductor is null ? null : ConductorBusinessMapper.ToResponse(conductor);
+            if (conductor is null)
+                throw new NotFoundException("Conductor con identificación", identificacion);
+
+            return ConductorBusinessMapper.ToResponse(conductor);
         }
 
         // =========================
         // POR LICENCIA
         // =========================
-        public async Task<ConductorResponse?> ObtenerPorLicenciaAsync(
+        public async Task<ConductorResponse> ObtenerPorLicenciaAsync(
             string numeroLicencia,
             CancellationToken cancellationToken = default)
         {
             var conductor = await _conductorDataService
                 .GetByLicenciaAsync(numeroLicencia, cancellationToken);
 
-            return conductor is null ? null : ConductorBusinessMapper.ToResponse(conductor);
+            if (conductor is null)
+                throw new NotFoundException("Conductor con licencia", numeroLicencia);
+
+            return ConductorBusinessMapper.ToResponse(conductor);
         }
 
         // =========================

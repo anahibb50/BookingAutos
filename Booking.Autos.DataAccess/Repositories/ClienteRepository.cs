@@ -14,14 +14,43 @@ namespace Booking.Autos.DataAccess.Repositories
             _context = context;
         }
 
+        private IQueryable<ClienteEntity> BuildSafeQuery()
+        {
+            return _context.Clientes
+                .AsNoTracking()
+                .Select(x => new ClienteEntity
+                {
+                    id_cliente = x.id_cliente,
+                    cliente_guid = x.cliente_guid,
+                    cli_nombre = x.cli_nombre ?? string.Empty,
+                    cli_apellido = x.cli_apellido ?? string.Empty,
+                    razon_social = x.razon_social,
+                    tipo_identificacion = x.tipo_identificacion ?? string.Empty,
+                    cli_ruc_ced = x.cli_ruc_ced ?? string.Empty,
+                    id_ciudad = x.id_ciudad,
+                    cli_direccion = x.cli_direccion,
+                    cli_genero = x.cli_genero,
+                    cli_telefono = x.cli_telefono,
+                    cli_email = x.cli_email,
+                    cli_estado = x.cli_estado ?? "ACT",
+                    creado_por_usuario = x.creado_por_usuario ?? "SYSTEM",
+                    fecha_registro_utc = x.fecha_registro_utc,
+                    modificado_por_usuario = x.modificado_por_usuario,
+                    fecha_modificacion_utc = x.fecha_modificacion_utc,
+                    modificacion_ip = x.modificacion_ip,
+                    servicio_origen = x.servicio_origen,
+                    es_eliminado = x.es_eliminado,
+                    fecha_eliminacion = x.fecha_eliminacion
+                });
+        }
+
         // =========================
         // CONSULTAS
         // =========================
 
         public async Task<IEnumerable<ClienteEntity>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            return await _context.Clientes
-                .AsNoTracking()
+            return await BuildSafeQuery()
                 .Where(x => !x.es_eliminado)
                 .OrderBy(x => x.id_cliente)
                 .ToListAsync(cancellationToken);
@@ -29,29 +58,25 @@ namespace Booking.Autos.DataAccess.Repositories
 
         public async Task<ClienteEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
-            return await _context.Clientes
-                .AsNoTracking()
+            return await BuildSafeQuery()
                 .FirstOrDefaultAsync(x => x.id_cliente == id && !x.es_eliminado, cancellationToken);
         }
 
         public async Task<ClienteEntity?> GetByGuidAsync(Guid guid, CancellationToken cancellationToken = default)
         {
-            return await _context.Clientes
-                .AsNoTracking()
+            return await BuildSafeQuery()
                 .FirstOrDefaultAsync(x => x.cliente_guid == guid && !x.es_eliminado, cancellationToken);
         }
 
         public async Task<ClienteEntity?> GetByIdentificacionAsync(string identificacion, CancellationToken cancellationToken = default)
         {
-            return await _context.Clientes
-                .AsNoTracking()
+            return await BuildSafeQuery()
                 .FirstOrDefaultAsync(x => x.cli_ruc_ced == identificacion && !x.es_eliminado, cancellationToken);
         }
 
         public async Task<ClienteEntity?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
         {
-            return await _context.Clientes
-                .AsNoTracking()
+            return await BuildSafeQuery()
                 .FirstOrDefaultAsync(x => x.cli_email == email && !x.es_eliminado, cancellationToken);
         }
 
@@ -65,7 +90,25 @@ namespace Booking.Autos.DataAccess.Repositories
             cliente.es_eliminado = false;
 
             await _context.Clientes.AddAsync(cliente, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                // Ver todos los valores de la entidad
+                var detalle = $"guid={cliente.cliente_guid} | " +
+                              $"nombre={cliente.cli_nombre} | " +
+                              $"apellido={cliente.cli_apellido} | " +
+                              $"tipo_id={cliente.tipo_identificacion} | " +
+                              $"ruc_ced={cliente.cli_ruc_ced} | " +
+                              $"ciudad={cliente.id_ciudad} | " +
+                              $"estado={cliente.cli_estado} | " +
+                              $"creado_por={cliente.creado_por_usuario}";
+
+                var innerMessage = ex.InnerException?.Message ?? ex.Message;
+                throw new Exception($"ERROR REAL CLIENTE: {innerMessage} | VALORES: {detalle}", ex);
+            }
         }
 
         public async Task UpdateAsync(ClienteEntity cliente, CancellationToken cancellationToken = default)
@@ -90,6 +133,8 @@ namespace Booking.Autos.DataAccess.Repositories
 
             existing.cli_telefono = cliente.cli_telefono;
             existing.cli_email = cliente.cli_email;
+            existing.es_eliminado = cliente.es_eliminado;      // 👈 clave
+            existing.fecha_eliminacion = cliente.fecha_eliminacion;
 
             existing.cli_estado = cliente.cli_estado;
 

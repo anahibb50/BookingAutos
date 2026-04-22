@@ -10,7 +10,7 @@ namespace Booking.Autos.API.Controllers.V1
 {
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/conductores")]
+    [Route("api/v1/conductores")]
     [Authorize]
     public class ConductorController : ControllerBase
     {
