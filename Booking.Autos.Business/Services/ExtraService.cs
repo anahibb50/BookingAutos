@@ -89,6 +89,7 @@ namespace Booking.Autos.Business.Services
                 throw new NotFoundException("Extra", id);
 
             existente.EsEliminado = true;
+            existente.Estado = "INA";
             existente.FechaInhabilitacionUtc = DateTime.UtcNow;
             existente.MotivoInhabilitacion = "Eliminación lógica";
             existente.ModificadoPorUsuario = usuario;

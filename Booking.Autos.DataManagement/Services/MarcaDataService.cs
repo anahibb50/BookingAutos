@@ -1,6 +1,6 @@
-﻿using Booking.Autos.DataManagement.Interfaces;
-using Booking.Autos.DataManagement.Models.Marcas;
+using Booking.Autos.DataManagement.Interfaces;
 using Booking.Autos.DataManagement.Mappers;
+using Booking.Autos.DataManagement.Models.Marcas;
 
 namespace Booking.Autos.DataManagement.Services
 {
@@ -13,24 +13,16 @@ namespace Booking.Autos.DataManagement.Services
             _unitOfWork = unitOfWork;
         }
 
-        // =========================
-        // CONSULTAS
-        // =========================
-
         public async Task<IEnumerable<MarcaDataModel>> GetAllAsync(CancellationToken ct = default)
         {
             var entities = await _unitOfWork.Marcas.GetAllAsync(ct);
-
             return MarcaDataMapper.ToDataModelList(entities);
         }
 
         public async Task<MarcaDataModel?> GetByIdAsync(int id, CancellationToken ct = default)
         {
             var entity = await _unitOfWork.Marcas.GetByIdAsync(id, ct);
-
-            return entity == null
-                ? null
-                : MarcaDataMapper.ToDataModel(entity);
+            return entity == null ? null : MarcaDataMapper.ToDataModel(entity);
         }
 
         public async Task<MarcaDataModel?> GetByNombreAsync(string nombre, CancellationToken ct = default)
@@ -41,14 +33,8 @@ namespace Booking.Autos.DataManagement.Services
                 x.nombre_marca == nombre &&
                 !x.es_eliminado);
 
-            return entity == null
-                ? null
-                : MarcaDataMapper.ToDataModel(entity);
+            return entity == null ? null : MarcaDataMapper.ToDataModel(entity);
         }
-
-        // =========================
-        // ESCRITURA
-        // =========================
 
         public async Task<MarcaDataModel> CreateAsync(MarcaDataModel model, CancellationToken ct = default)
         {
@@ -73,6 +59,8 @@ namespace Booking.Autos.DataManagement.Services
                 throw new Exception("Marca no encontrada");
 
             existing.nombre_marca = model.Nombre;
+            existing.es_eliminado = model.EsEliminado;
+            existing.fecha_eliminacion = model.FechaEliminacion;
             existing.fecha_actualizacion = DateTime.UtcNow;
 
             await _unitOfWork.Marcas.UpdateAsync(existing, ct);
@@ -97,17 +85,10 @@ namespace Booking.Autos.DataManagement.Services
             return true;
         }
 
-        // =========================
-        // VALIDACIONES
-        // =========================
-
         public async Task<bool> ExistsByNombreAsync(string nombre, CancellationToken ct = default)
         {
             var entities = await _unitOfWork.Marcas.GetAllAsync(ct);
-
-            return entities.Any(x =>
-                x.nombre_marca == nombre &&
-                !x.es_eliminado);
+            return entities.Any(x => x.nombre_marca == nombre && !x.es_eliminado);
         }
     }
 }

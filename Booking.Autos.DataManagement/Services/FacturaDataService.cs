@@ -1,7 +1,7 @@
-﻿using Booking.Autos.DataManagement.Interfaces;
-using Booking.Autos.DataManagement.Models.Facturas;
-using Booking.Autos.DataManagement.Mappers;
 using Booking.Autos.DataManagement.Common;
+using Booking.Autos.DataManagement.Interfaces;
+using Booking.Autos.DataManagement.Mappers;
+using Booking.Autos.DataManagement.Models.Facturas;
 
 namespace Booking.Autos.DataManagement.Services
 {
@@ -14,33 +14,22 @@ namespace Booking.Autos.DataManagement.Services
             _unitOfWork = unitOfWork;
         }
 
-        // =========================
-        // CONSULTAS
-        // =========================
-
         public async Task<IReadOnlyList<FacturaDataModel>> GetAllAsync(CancellationToken ct = default)
         {
             var entities = await _unitOfWork.Facturas.GetAllAsync(ct);
-
             return FacturaDataMapper.ToDataModelList(entities);
         }
 
         public async Task<FacturaDataModel?> GetByIdAsync(int id, CancellationToken ct = default)
         {
             var entity = await _unitOfWork.Facturas.GetByIdAsync(id, ct);
-
-            return entity == null
-                ? null
-                : FacturaDataMapper.ToDataModel(entity);
+            return entity == null ? null : FacturaDataMapper.ToDataModel(entity);
         }
 
         public async Task<IEnumerable<FacturaDataModel>> GetByClienteAsync(int idCliente, CancellationToken ct = default)
         {
             var entities = await _unitOfWork.Facturas.GetAllAsync(ct);
-
-            return entities
-                .Where(x => x.id_cliente == idCliente && !x.es_eliminado)
-                .Select(FacturaDataMapper.ToDataModel);
+            return entities.Where(x => x.id_cliente == idCliente && !x.es_eliminado).Select(FacturaDataMapper.ToDataModel);
         }
 
         public async Task<FacturaDataModel?> GetByReservaAsync(int idReserva, CancellationToken ct = default)
@@ -51,18 +40,13 @@ namespace Booking.Autos.DataManagement.Services
                 x.id_reserva == idReserva &&
                 !x.es_eliminado);
 
-            return entity == null
-                ? null
-                : FacturaDataMapper.ToDataModel(entity);
+            return entity == null ? null : FacturaDataMapper.ToDataModel(entity);
         }
 
-        public async Task<DataPagedResult<FacturaDataModel>> BuscarAsync(
-            FacturaFiltroDataModel filtro,
-            CancellationToken ct = default)
+        public async Task<DataPagedResult<FacturaDataModel>> BuscarAsync(FacturaFiltroDataModel filtro, CancellationToken ct = default)
         {
             var query = (await _unitOfWork.Facturas.GetAllAsync(ct)).AsQueryable();
 
-            // 🔍 FILTROS
             if (filtro.IdCliente.HasValue)
                 query = query.Where(x => x.id_cliente == filtro.IdCliente.Value);
 
@@ -96,10 +80,8 @@ namespace Booking.Autos.DataManagement.Services
             if (filtro.FechaAnulacionHasta.HasValue)
                 query = query.Where(x => x.fecha_anulacion <= filtro.FechaAnulacionHasta.Value);
 
-            // 📊 TOTAL
             var totalRecords = query.Count();
 
-            // 📄 PAGINACIÓN
             var items = query
                 .Skip((filtro.Page - 1) * filtro.PageSize)
                 .Take(filtro.PageSize)
@@ -107,17 +89,8 @@ namespace Booking.Autos.DataManagement.Services
 
             var data = items.Select(FacturaDataMapper.ToDataModel);
 
-            return new DataPagedResult<FacturaDataModel>(
-                data,
-                totalRecords,
-                filtro.Page,
-                filtro.PageSize
-            );
+            return new DataPagedResult<FacturaDataModel>(data, totalRecords, filtro.Page, filtro.PageSize);
         }
-
-        // =========================
-        // ESCRITURA
-        // =========================
 
         public async Task<FacturaDataModel> CreateAsync(FacturaDataModel model, CancellationToken ct = default)
         {
@@ -127,8 +100,7 @@ namespace Booking.Autos.DataManagement.Services
             entity.fecha_creacion = DateTime.UtcNow;
             entity.fecha_actualizacion = DateTime.UtcNow;
             entity.es_eliminado = false;
-
-            entity.fac_estado = "PEN"; // 🔥 siempre inicia pendiente
+            entity.fac_estado = "ABI";
 
             await _unitOfWork.Facturas.AddAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
@@ -136,9 +108,22 @@ namespace Booking.Autos.DataManagement.Services
             return FacturaDataMapper.ToDataModel(entity);
         }
 
-        // =========================
-        // ACCIONES DE NEGOCIO
-        // =========================
+        public async Task<FacturaDataModel> UpdateAsync(FacturaDataModel model, CancellationToken ct = default)
+        {
+            var existing = await _unitOfWork.Facturas.GetByIdAsync(model.Id, ct);
+
+            if (existing == null)
+                throw new Exception("Factura no encontrada");
+
+            existing.fac_descripcion = model.Descripcion;
+            existing.origen_factura = model.Origen;
+            existing.fecha_actualizacion = DateTime.UtcNow;
+
+            await _unitOfWork.Facturas.UpdateAsync(existing, ct);
+            await _unitOfWork.SaveChangesAsync(ct);
+
+            return FacturaDataMapper.ToDataModel(existing);
+        }
 
         public async Task<bool> AprobarAsync(int id, CancellationToken ct = default)
         {
@@ -147,8 +132,8 @@ namespace Booking.Autos.DataManagement.Services
             if (entity == null)
                 return false;
 
-            if (entity.fac_estado != "PEN")
-                return false; // 🔥 solo se aprueba si está pendiente
+            if (entity.fac_estado != "ABI")
+                return false;
 
             entity.fac_estado = "APR";
             entity.fecha_aprobacion = DateTime.UtcNow;

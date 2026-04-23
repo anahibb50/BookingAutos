@@ -45,15 +45,6 @@ namespace Booking.Autos.Business.Validators
                 errors.Add("No se puede reservar en fechas pasadas.");
 
             // =========================
-            // HORAS (OPCIONAL)
-            // =========================
-            if (request.HoraInicio.HasValue && request.HoraFin.HasValue)
-            {
-                if (request.HoraInicio >= request.HoraFin)
-                    errors.Add("La hora de inicio debe ser menor a la hora de fin.");
-            }
-
-            // =========================
             // DESCRIPCIÓN
             // =========================
             if (!string.IsNullOrWhiteSpace(request.Descripcion) &&
@@ -85,15 +76,6 @@ namespace Booking.Autos.Business.Validators
 
             if (request.FechaInicio < DateTime.UtcNow.Date)
                 errors.Add("No se puede modificar a fechas pasadas.");
-
-            // =========================
-            // HORAS
-            // =========================
-            if (request.HoraInicio.HasValue && request.HoraFin.HasValue)
-            {
-                if (request.HoraInicio >= request.HoraFin)
-                    errors.Add("La hora de inicio debe ser menor a la hora de fin.");
-            }
 
             return errors;
         }

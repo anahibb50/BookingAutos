@@ -21,7 +21,7 @@ namespace Booking.Autos.Business.Mappers
                 // ValorUnitario
                 // Subtotal
 
-                Estado = "ACT",
+                Estado = "PEN",
                 EsEliminado = false,
 
                 FechaCreacion = DateTime.UtcNow

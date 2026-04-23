@@ -83,7 +83,7 @@ namespace Booking.Autos.DataManagement.Services
             entity.es_eliminado = true;
             entity.fecha_eliminacion = DateTime.UtcNow;
 
-            _unitOfWork.Categorias.UpdateAsync(entity);
+            await _unitOfWork.Categorias.UpdateAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
 
             return true;

@@ -51,7 +51,7 @@ namespace Booking.Autos.DataAccess.Repositories
             reservaExtra.fecha_creacion = DateTime.UtcNow;
             reservaExtra.fecha_actualizacion = DateTime.UtcNow;
             reservaExtra.es_eliminado = false;
-            reservaExtra.r_x_e_estado = "ACT";
+            reservaExtra.r_x_e_estado = "PEN";
 
             await _context.ReservaExtras.AddAsync(reservaExtra, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
@@ -86,6 +86,7 @@ namespace Booking.Autos.DataAccess.Repositories
 
             // 🔥 soft delete
             existing.es_eliminado = true;
+            existing.r_x_e_estado = "CAN";
             existing.fecha_eliminacion = DateTime.UtcNow;
             existing.fecha_actualizacion = DateTime.UtcNow;
 

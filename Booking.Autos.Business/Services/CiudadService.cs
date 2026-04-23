@@ -1,4 +1,4 @@
-﻿using Booking.Autos.Business.DTOs.Catalogos.Ciudad;
+using Booking.Autos.Business.DTOs.Catalogos.Ciudad;
 using Booking.Autos.Business.DTOs.Ciudad;
 using Booking.Autos.Business.Exceptions;
 using Booking.Autos.Business.Interfaces;
@@ -10,15 +10,16 @@ namespace Booking.Autos.Business.Services
     public class CiudadService : ICiudadService
     {
         private readonly ICiudadDataService _ciudadDataService;
+        private readonly IPaisDataService _paisDataService;
 
-        public CiudadService(ICiudadDataService ciudadDataService)
+        public CiudadService(
+            ICiudadDataService ciudadDataService,
+            IPaisDataService paisDataService)
         {
             _ciudadDataService = ciudadDataService;
+            _paisDataService = paisDataService;
         }
 
-        // =========================
-        // CREAR
-        // =========================
         public async Task<CiudadResponse> CrearAsync(
             CrearCiudadRequest request,
             CancellationToken cancellationToken = default)
@@ -26,7 +27,13 @@ namespace Booking.Autos.Business.Services
             if (string.IsNullOrWhiteSpace(request.Nombre))
                 throw new ValidationException(new List<string> { "El nombre es obligatorio." });
 
-            // 🔥 validar duplicado por país
+            if (string.IsNullOrWhiteSpace(request.CodigoPostal))
+                throw new ValidationException(new List<string> { "El código postal es obligatorio." });
+
+            var pais = await _paisDataService.GetByIdAsync(request.IdPais, cancellationToken);
+            if (pais is null)
+                throw new ValidationException(new List<string> { $"No existe el país con id {request.IdPais}." });
+
             var existe = await _ciudadDataService
                 .ExistsByNombreAsync(request.Nombre, request.IdPais, cancellationToken);
 
@@ -35,15 +42,11 @@ namespace Booking.Autos.Business.Services
 
             var dataModel = CiudadBusinessMapper.ToDataModel(request);
 
-            var creado = await _ciudadDataService
-                .CreateAsync(dataModel, cancellationToken);
+            var creado = await _ciudadDataService.CreateAsync(dataModel, cancellationToken);
 
             return CiudadBusinessMapper.ToResponse(creado);
         }
 
-        // =========================
-        // ACTUALIZAR
-        // =========================
         public async Task<CiudadResponse> ActualizarAsync(
             ActualizarCiudadRequest request,
             CancellationToken cancellationToken = default)
@@ -54,13 +57,18 @@ namespace Booking.Autos.Business.Services
             if (string.IsNullOrWhiteSpace(request.Nombre))
                 throw new ValidationException(new List<string> { "El nombre es obligatorio." });
 
-            var existente = await _ciudadDataService
-                .GetByIdAsync(request.Id, cancellationToken);
+            if (string.IsNullOrWhiteSpace(request.CodigoPostal))
+                throw new ValidationException(new List<string> { "El código postal es obligatorio." });
+
+            var existente = await _ciudadDataService.GetByIdAsync(request.Id, cancellationToken);
 
             if (existente is null)
                 throw new NotFoundException("Ciudad", request.Id);
 
-            // 🔥 validar duplicado
+            var pais = await _paisDataService.GetByIdAsync(request.IdPais, cancellationToken);
+            if (pais is null)
+                throw new ValidationException(new List<string> { $"No existe el país con id {request.IdPais}." });
+
             var existeNombre = await _ciudadDataService
                 .ExistsByNombreAsync(request.Nombre, request.IdPais, cancellationToken);
 
@@ -71,47 +79,40 @@ namespace Booking.Autos.Business.Services
             }
 
             var dataModel = CiudadBusinessMapper.ToDataModel(request);
-
-            // 🔥 conservar datos importantes
             dataModel.Guid = existente.Guid;
             dataModel.FechaCreacion = existente.FechaCreacion;
             dataModel.EsEliminado = existente.EsEliminado;
+            dataModel.Estado = existente.Estado;
+            dataModel.OrigenRegistro = existente.OrigenRegistro;
+            dataModel.FechaEliminacion = existente.FechaEliminacion;
 
-            var actualizado = await _ciudadDataService
-                .UpdateAsync(dataModel, cancellationToken);
+            var actualizado = await _ciudadDataService.UpdateAsync(dataModel, cancellationToken);
 
             return CiudadBusinessMapper.ToResponse(actualizado);
         }
 
-        // =========================
-        // ELIMINACIÓN LÓGICA
-        // =========================
         public async Task EliminarLogicoAsync(
             int id,
             string usuario,
             CancellationToken cancellationToken = default)
         {
-            var existente = await _ciudadDataService
-                .GetByIdAsync(id, cancellationToken);
+            var existente = await _ciudadDataService.GetByIdAsync(id, cancellationToken);
 
             if (existente is null)
                 throw new NotFoundException("Ciudad", id);
 
             existente.EsEliminado = true;
             existente.FechaEliminacion = DateTime.UtcNow;
+            existente.Estado = "INA";
 
             await _ciudadDataService.UpdateAsync(existente, cancellationToken);
         }
 
-        // =========================
-        // OBTENER POR ID
-        // =========================
         public async Task<CiudadResponse> ObtenerPorIdAsync(
             int id,
             CancellationToken cancellationToken = default)
         {
-            var ciudad = await _ciudadDataService
-                .GetByIdAsync(id, cancellationToken);
+            var ciudad = await _ciudadDataService.GetByIdAsync(id, cancellationToken);
 
             if (ciudad is null)
                 throw new NotFoundException("Ciudad", id);
@@ -119,45 +120,29 @@ namespace Booking.Autos.Business.Services
             return CiudadBusinessMapper.ToResponse(ciudad);
         }
 
-        // =========================
-        // LISTAR
-        // =========================
         public async Task<IReadOnlyList<CiudadResponse>> ListarAsync(
             CancellationToken cancellationToken = default)
         {
-            var ciudades = await _ciudadDataService
-                .GetAllAsync(cancellationToken);
+            var ciudades = await _ciudadDataService.GetAllAsync(cancellationToken);
 
-            return ciudades
-                .Select(CiudadBusinessMapper.ToResponse)
-                .ToList();
+            return ciudades.Select(CiudadBusinessMapper.ToResponse).ToList();
         }
 
-        // =========================
-        // POR PAÍS 🔥
-        // =========================
         public async Task<IReadOnlyList<CiudadResponse>> ObtenerPorPaisAsync(
             int idPais,
             CancellationToken cancellationToken = default)
         {
-            var ciudades = await _ciudadDataService
-                .GetByPaisAsync(idPais, cancellationToken);
+            var ciudades = await _ciudadDataService.GetByPaisAsync(idPais, cancellationToken);
 
-            return ciudades
-                .Select(CiudadBusinessMapper.ToResponse)
-                .ToList();
+            return ciudades.Select(CiudadBusinessMapper.ToResponse).ToList();
         }
 
-        // =========================
-        // VALIDACIÓN
-        // =========================
         public async Task<bool> ExistePorNombreAsync(
             string nombre,
             int idPais,
             CancellationToken cancellationToken = default)
         {
-            return await _ciudadDataService
-                .ExistsByNombreAsync(nombre, idPais, cancellationToken);
+            return await _ciudadDataService.ExistsByNombreAsync(nombre, idPais, cancellationToken);
         }
     }
 }

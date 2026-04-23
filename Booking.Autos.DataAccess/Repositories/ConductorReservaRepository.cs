@@ -70,7 +70,7 @@ namespace Booking.Autos.DataAccess.Repositories
 
             entity.fecha_registro_utc = DateTime.UtcNow;
             entity.fecha_asignacion_utc = DateTime.UtcNow;
-            entity.estado_asignacion = "ACT";
+            entity.estado_asignacion = "PEN";
 
             await _context.ConductoresReservas.AddAsync(entity, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
@@ -127,7 +127,7 @@ namespace Booking.Autos.DataAccess.Repositories
 
             // 🔥 soft delete con fecha
             existing.fecha_eliminacion = DateTime.UtcNow;
-            existing.estado_asignacion = "INA";
+            existing.estado_asignacion = "CAN";
             existing.fecha_desasignacion_utc = DateTime.UtcNow;
             existing.fecha_modificacion_utc = DateTime.UtcNow;
 

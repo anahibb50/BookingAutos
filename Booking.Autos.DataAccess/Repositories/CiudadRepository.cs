@@ -73,6 +73,8 @@ namespace Booking.Autos.DataAccess.Repositories
 
             existing.estado_ciudad = ciudad.estado_ciudad;
             existing.origen_registro = ciudad.origen_registro;
+            existing.es_eliminado = ciudad.es_eliminado;
+            existing.fecha_eliminacion = ciudad.fecha_eliminacion;
 
             existing.fecha_actualizacion = DateTime.UtcNow;
 

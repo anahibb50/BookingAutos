@@ -1,6 +1,6 @@
-﻿using Booking.Autos.DataManagement.Interfaces;
-using Booking.Autos.DataManagement.Models.Paises;
+using Booking.Autos.DataManagement.Interfaces;
 using Booking.Autos.DataManagement.Mappers;
+using Booking.Autos.DataManagement.Models.Paises;
 
 namespace Booking.Autos.DataManagement.Services
 {
@@ -13,24 +13,16 @@ namespace Booking.Autos.DataManagement.Services
             _unitOfWork = unitOfWork;
         }
 
-        // =========================
-        // CONSULTAS
-        // =========================
-
         public async Task<IEnumerable<PaisDataModel>> GetAllAsync(CancellationToken ct = default)
         {
             var entities = await _unitOfWork.Paises.GetAllAsync(ct);
-
             return PaisDataMapper.ToDataModelList(entities);
         }
 
         public async Task<PaisDataModel?> GetByIdAsync(int id, CancellationToken ct = default)
         {
             var entity = await _unitOfWork.Paises.GetByIdAsync(id, ct);
-
-            return entity == null
-                ? null
-                : PaisDataMapper.ToDataModel(entity);
+            return entity == null ? null : PaisDataMapper.ToDataModel(entity);
         }
 
         public async Task<PaisDataModel?> GetByNombreAsync(string nombre, CancellationToken ct = default)
@@ -41,9 +33,7 @@ namespace Booking.Autos.DataManagement.Services
                 x.nombre_pais == nombre &&
                 !x.es_eliminado);
 
-            return entity == null
-                ? null
-                : PaisDataMapper.ToDataModel(entity);
+            return entity == null ? null : PaisDataMapper.ToDataModel(entity);
         }
 
         public async Task<PaisDataModel?> GetByCodigoIsoAsync(string codigoIso, CancellationToken ct = default)
@@ -54,14 +44,8 @@ namespace Booking.Autos.DataManagement.Services
                 x.codigo_iso == codigoIso &&
                 !x.es_eliminado);
 
-            return entity == null
-                ? null
-                : PaisDataMapper.ToDataModel(entity);
+            return entity == null ? null : PaisDataMapper.ToDataModel(entity);
         }
-
-        // =========================
-        // ESCRITURA
-        // =========================
 
         public async Task<PaisDataModel> CreateAsync(PaisDataModel model, CancellationToken ct = default)
         {
@@ -87,7 +71,8 @@ namespace Booking.Autos.DataManagement.Services
 
             existing.nombre_pais = model.Nombre;
             existing.codigo_iso = model.CodigoIso;
-
+            existing.es_eliminado = model.EsEliminado;
+            existing.fecha_eliminacion = model.FechaEliminacion;
             existing.fecha_actualizacion = DateTime.UtcNow;
 
             await _unitOfWork.Paises.UpdateAsync(existing, ct);
@@ -103,7 +88,6 @@ namespace Booking.Autos.DataManagement.Services
             if (entity == null)
                 return false;
 
-            // 🔥 Validar si tiene ciudades
             var tieneCiudades = await TieneCiudadesAsociadasAsync(id, ct);
 
             if (tieneCiudades)
@@ -118,35 +102,22 @@ namespace Booking.Autos.DataManagement.Services
             return true;
         }
 
-        // =========================
-        // VALIDACIONES
-        // =========================
-
         public async Task<bool> ExistsByNombreAsync(string nombre, CancellationToken ct = default)
         {
             var entities = await _unitOfWork.Paises.GetAllAsync(ct);
-
-            return entities.Any(x =>
-                x.nombre_pais == nombre &&
-                !x.es_eliminado);
+            return entities.Any(x => x.nombre_pais == nombre && !x.es_eliminado);
         }
 
         public async Task<bool> ExistsByCodigoIsoAsync(string codigoIso, CancellationToken ct = default)
         {
             var entities = await _unitOfWork.Paises.GetAllAsync(ct);
-
-            return entities.Any(x =>
-                x.codigo_iso == codigoIso &&
-                !x.es_eliminado);
+            return entities.Any(x => x.codigo_iso == codigoIso && !x.es_eliminado);
         }
 
         public async Task<bool> TieneCiudadesAsociadasAsync(int idPais, CancellationToken ct = default)
         {
             var ciudades = await _unitOfWork.Ciudades.GetAllAsync(ct);
-
-            return ciudades.Any(x =>
-                x.id_pais == idPais &&
-                !x.es_eliminado);
+            return ciudades.Any(x => x.id_pais == idPais && !x.es_eliminado);
         }
     }
 }

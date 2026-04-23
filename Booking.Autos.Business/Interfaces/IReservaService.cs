@@ -1,15 +1,10 @@
-﻿using Booking.Autos.Business.DTOs.Reserva;
-using Booking.Autos.DataManagement.Models;
+using Booking.Autos.Business.DTOs.Reserva;
 using Booking.Autos.DataManagement.Common;
 
 namespace Booking.Autos.Business.Interfaces
 {
     public interface IReservaService
     {
-        // =========================
-        // ESCRITURA
-        // =========================
-
         Task<ReservaResponse> CrearAsync(
             CrearReservaRequest request,
             CancellationToken cancellationToken = default);
@@ -17,10 +12,6 @@ namespace Booking.Autos.Business.Interfaces
         Task<ReservaResponse> ActualizarAsync(
             ActualizarReservaRequest request,
             CancellationToken cancellationToken = default);
-
-        // =========================
-        // CONSULTAS
-        // =========================
 
         Task<ReservaResponse> ObtenerPorIdAsync(
             int id,
@@ -37,24 +28,15 @@ namespace Booking.Autos.Business.Interfaces
             int idVehiculo,
             CancellationToken cancellationToken = default);
 
-        // 🔥 PAGINADO (CLAVE)
         Task<DataPagedResult<ReservaResponse>> BuscarAsync(
             ReservaFiltroRequest request,
             CancellationToken cancellationToken = default);
-
-        // =========================
-        // DISPONIBILIDAD 🔥🔥🔥
-        // =========================
 
         Task<bool> VerificarDisponibilidadVehiculoAsync(
             int idVehiculo,
             DateTime fechaInicio,
             DateTime fechaFin,
             CancellationToken cancellationToken = default);
-
-        // =========================
-        // ACCIONES DE NEGOCIO 🔥🔥🔥
-        // =========================
 
         Task<bool> ConfirmarAsync(
             int id,

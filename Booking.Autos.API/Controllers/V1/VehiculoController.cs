@@ -24,6 +24,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 📌 CREAR
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpPost]
         public async Task<IActionResult> Crear(
             [FromBody] CrearVehiculoRequest request,
@@ -40,6 +41,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // ✏️ ACTUALIZAR
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Actualizar(
             int id,
@@ -59,6 +61,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // ❌ ELIMINAR LÓGICO
         // ============================================================
+        [Authorize(Roles = "ADMIN")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Eliminar(
             int id,
@@ -74,6 +77,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 OBTENER POR ID
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpGet("{id}")]
         public async Task<IActionResult> ObtenerPorId(int id, CancellationToken ct)
         {
@@ -85,6 +89,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 POR PLACA (🔥 CLAVE)
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpGet("por-placa")]
         public async Task<IActionResult> ObtenerPorPlaca(
             [FromQuery] string placa,
@@ -98,6 +103,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 📄 LISTAR
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpGet]
         public async Task<IActionResult> Listar(CancellationToken ct)
         {
@@ -109,6 +115,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 BÚSQUEDA PAGINADA 🔥🔥🔥
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpPost("buscar")]
         public async Task<IActionResult> Buscar(
             [FromBody] VehiculoFiltroRequest request,
@@ -122,6 +129,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔎 FILTROS
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpGet("por-marca/{idMarca}")]
         public async Task<IActionResult> PorMarca(int idMarca, CancellationToken ct)
         {
@@ -130,6 +138,7 @@ namespace Booking.Autos.API.Controllers.V1
             return Ok(ApiResponse<IReadOnlyList<VehiculoResponse>>.Ok(result));
         }
 
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpGet("por-categoria/{idCategoria}")]
         public async Task<IActionResult> PorCategoria(int idCategoria, CancellationToken ct)
         {
@@ -138,6 +147,7 @@ namespace Booking.Autos.API.Controllers.V1
             return Ok(ApiResponse<IReadOnlyList<VehiculoResponse>>.Ok(result));
         }
 
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpGet("disponibles")]
         public async Task<IActionResult> Disponibles(CancellationToken ct)
         {
@@ -146,6 +156,7 @@ namespace Booking.Autos.API.Controllers.V1
             return Ok(ApiResponse<IReadOnlyList<VehiculoResponse>>.Ok(result));
         }
 
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpGet("por-precio")]
         public async Task<IActionResult> PorPrecio(
             [FromQuery] decimal min,
@@ -162,6 +173,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔥 OPERACIONES ESPECIALES
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpPatch("{id}/kilometraje")]
         public async Task<IActionResult> ActualizarKilometraje(
             int id,
@@ -173,6 +185,7 @@ namespace Booking.Autos.API.Controllers.V1
             return Ok(ApiResponse<bool>.Ok(ok, "Kilometraje actualizado"));
         }
 
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpPatch("{id}/estado")]
         public async Task<IActionResult> ActualizarEstado(
             int id,
@@ -187,6 +200,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 VALIDACIÓN
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpGet("existe-placa")]
         public async Task<IActionResult> ExistePorPlaca(
             [FromQuery] string placa,

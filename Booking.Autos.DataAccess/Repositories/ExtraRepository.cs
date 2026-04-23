@@ -84,6 +84,10 @@ namespace Booking.Autos.DataAccess.Repositories
             existing.descripcion_extra = extra.descripcion_extra;
             existing.valor_fijo = extra.valor_fijo;
             existing.estado_extra = extra.estado_extra;
+            existing.es_eliminado = extra.es_eliminado;
+            existing.fecha_inhabilitacion_utc = extra.fecha_inhabilitacion_utc;
+            existing.motivo_inhabilitacion = extra.motivo_inhabilitacion;
+            existing.origen_registro = extra.origen_registro;
 
             // auditoría
             existing.fecha_modificacion_utc = DateTime.UtcNow;

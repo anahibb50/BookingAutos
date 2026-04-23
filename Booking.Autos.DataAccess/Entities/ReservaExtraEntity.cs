@@ -16,7 +16,7 @@
         public decimal r_x_e_subtotal { get; set; }
 
         // Estado y Auditoría
-        public string r_x_e_estado { get; set; } = "ACT";
+        public string r_x_e_estado { get; set; } = "PEN";
         public DateTime fecha_creacion { get; set; }
         public DateTime fecha_actualizacion { get; set; }
         public DateTime? fecha_eliminacion { get; set; }

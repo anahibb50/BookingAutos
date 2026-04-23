@@ -23,6 +23,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 📌 CREAR
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpPost]
         public async Task<IActionResult> Crear(
             [FromBody] CrearExtraRequest request,
@@ -36,6 +37,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // ✏️ ACTUALIZAR
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Actualizar(
             int id,
@@ -52,6 +54,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // ❌ ELIMINAR LÓGICO
         // ============================================================
+        [Authorize(Roles = "ADMIN")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Eliminar(
             int id,
@@ -67,6 +70,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 OBTENER POR ID
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpGet("{id}")]
         public async Task<IActionResult> ObtenerPorId(
             int id,
@@ -80,6 +84,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 📄 LISTAR
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpGet]
         public async Task<IActionResult> Listar(CancellationToken ct)
         {
@@ -91,6 +96,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔥 SOLO ACTIVOS
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpGet("activos")]
         public async Task<IActionResult> ListarActivos(CancellationToken ct)
         {
@@ -102,6 +108,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 BUSCAR POR NOMBRE
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpGet("buscar")]
         public async Task<IActionResult> BuscarPorNombre(
             [FromQuery] string nombre,
@@ -115,6 +122,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 💰 ACTUALIZAR PRECIO (🔥 ESPECIAL)
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpPatch("{id}/precio")]
         public async Task<IActionResult> ActualizarPrecio(
             int id,

@@ -84,24 +84,6 @@ namespace Booking.Autos.Business.Services
                 .GetAsync(request.IdReserva, request.IdConductor, ct);
 
             // =========================
-            // 🔥 ELIMINAR
-            // =========================
-            if (request.Eliminar)
-            {
-                if (existente is null)
-                    throw new NotFoundException("ConductorReserva", request.IdConductor);
-
-                await _dataService.DeleteAsync(request.IdReserva, request.IdConductor, ct);
-
-                return new ConductorReservaDetalleResponse
-                {
-                    IdReserva = request.IdReserva,
-                    IdConductor = request.IdConductor,
-                    Estado = "ELI"
-                };
-            }
-
-            // =========================
             // 🔥 CREAR
             // =========================
             if (existente is null)

@@ -1,4 +1,4 @@
-﻿using Booking.Autos.DataManagement.Common;
+using Booking.Autos.DataManagement.Common;
 using Booking.Autos.DataManagement.Interfaces;
 using Booking.Autos.DataManagement.Mappers;
 using Booking.Autos.DataManagement.Models.Vehiculos;
@@ -15,25 +15,16 @@ namespace Booking.Autos.DataManagement.Services
             _unitOfWork = unitOfWork;
         }
 
-        // =========================
-        // CONSULTAS
-        // =========================
-
         public async Task<IReadOnlyList<VehiculoDataModel>> GetAllAsync(CancellationToken ct = default)
         {
             var entities = await _unitOfWork.Vehiculos.GetAllAsync(ct);
-
             return VehiculoDataMapper.ToDataModelList(entities);
         }
 
         public async Task<VehiculoDataModel?> GetByIdAsync(int id, CancellationToken ct = default)
         {
-            var entity = await _unitOfWork.VehiculoDetalleQueries
-                .GetDetalleAsync(id, ct);
-
-            return entity == null
-                ? null
-                : VehiculoDataMapper.ToDataModel(entity);
+            var entity = await _unitOfWork.VehiculoDetalleQueries.GetDetalleAsync(id, ct);
+            return entity == null ? null : VehiculoDataMapper.ToDataModel(entity);
         }
 
         public async Task<VehiculoDataModel?> GetByPlacaAsync(string placa, CancellationToken ct = default)
@@ -44,38 +35,34 @@ namespace Booking.Autos.DataManagement.Services
                 x.placa_vehiculo == placa &&
                 !x.es_eliminado);
 
-            return entity == null
-                ? null
-                : VehiculoDataMapper.ToDataModel(entity);
+            return entity == null ? null : VehiculoDataMapper.ToDataModel(entity);
         }
-
-        // =========================
-        // 🔥 BUSCADOR PRINCIPAL
-        // =========================
 
         public async Task<DataPagedResult<VehiculoDataModel>> BuscarAsync(
             VehiculoFiltroDataModel filtro,
             CancellationToken ct = default)
         {
-            if (!filtro.FechaInicio.HasValue || !filtro.FechaFin.HasValue)
-                throw new Exception("Debe enviar fechas para buscar disponibilidad");
+            IEnumerable<DataAccess.Entities.VehiculoEntity> entities;
 
-            if (!filtro.IdLocalizacion.HasValue)
-                throw new Exception("Debe enviar la localización");
-
-            var entities = await _unitOfWork.VehiculoBusquedaQueries.ExecuteAsync(
-                filtro.IdLocalizacion.Value,
-                filtro.FechaInicio.Value,
-                filtro.FechaFin.Value,
-                filtro.IdCategoria,
-                filtro.IdMarca,
-                filtro.TipoTransmision,
-                ct
-            );
+            if (filtro.IdLocalizacion.HasValue && filtro.FechaInicio.HasValue && filtro.FechaFin.HasValue)
+            {
+                entities = await _unitOfWork.VehiculoBusquedaQueries.ExecuteAsync(
+                    filtro.IdLocalizacion.Value,
+                    filtro.FechaInicio.Value,
+                    filtro.FechaFin.Value,
+                    filtro.IdCategoria,
+                    filtro.IdMarca,
+                    filtro.TipoTransmision,
+                    ct
+                );
+            }
+            else
+            {
+                entities = await _unitOfWork.Vehiculos.GetAllAsync(ct);
+            }
 
             var query = entities.AsQueryable();
 
-            // 🔥 filtros adicionales (en memoria)
             if (filtro.PrecioMin.HasValue)
                 query = query.Where(x => x.precio_base_dia >= filtro.PrecioMin);
 
@@ -84,6 +71,18 @@ namespace Booking.Autos.DataManagement.Services
 
             if (!string.IsNullOrWhiteSpace(filtro.Modelo))
                 query = query.Where(x => x.modelo_vehiculo.Contains(filtro.Modelo));
+
+            if (!string.IsNullOrWhiteSpace(filtro.Placa))
+                query = query.Where(x => x.placa_vehiculo.Contains(filtro.Placa));
+
+            if (!string.IsNullOrWhiteSpace(filtro.Estado))
+                query = query.Where(x => x.estado_vehiculo == filtro.Estado);
+
+            if (!string.IsNullOrWhiteSpace(filtro.TipoCombustible))
+                query = query.Where(x => x.tipo_combustible == filtro.TipoCombustible);
+
+            if (!string.IsNullOrWhiteSpace(filtro.TipoTransmision))
+                query = query.Where(x => x.tipo_transmision == filtro.TipoTransmision);
 
             if (filtro.CapacidadMinPasajeros.HasValue)
                 query = query.Where(x => x.capacidad_pasajeros >= filtro.CapacidadMinPasajeros);
@@ -100,59 +99,32 @@ namespace Booking.Autos.DataManagement.Services
 
             var data = items.Select(VehiculoDataMapper.ToDataModel);
 
-            return new DataPagedResult<VehiculoDataModel>(
-                data,
-                total,
-                filtro.Page,
-                filtro.PageSize
-            );
+            return new DataPagedResult<VehiculoDataModel>(data, total, filtro.Page, filtro.PageSize);
         }
-
-        // =========================
-        // FILTROS SIMPLES
-        // =========================
 
         public async Task<IEnumerable<VehiculoDataModel>> GetByMarcaAsync(int idMarca, CancellationToken ct = default)
         {
             var entities = await _unitOfWork.Vehiculos.GetAllAsync(ct);
-
-            return entities
-                .Where(x => x.id_marca == idMarca && !x.es_eliminado)
-                .Select(VehiculoDataMapper.ToDataModel);
+            return entities.Where(x => x.id_marca == idMarca && !x.es_eliminado).Select(VehiculoDataMapper.ToDataModel);
         }
 
         public async Task<IEnumerable<VehiculoDataModel>> GetByCategoriaAsync(int idCategoria, CancellationToken ct = default)
         {
             var entities = await _unitOfWork.Vehiculos.GetAllAsync(ct);
-
-            return entities
-                .Where(x => x.id_categoria == idCategoria && !x.es_eliminado)
-                .Select(VehiculoDataMapper.ToDataModel);
+            return entities.Where(x => x.id_categoria == idCategoria && !x.es_eliminado).Select(VehiculoDataMapper.ToDataModel);
         }
 
         public async Task<IEnumerable<VehiculoDataModel>> GetDisponiblesAsync(CancellationToken ct = default)
         {
             var entities = await _unitOfWork.Vehiculos.GetAllAsync(ct);
-
-            return entities
-                .Where(x => x.estado_vehiculo == "ACT" && !x.es_eliminado)
-                .Select(VehiculoDataMapper.ToDataModel);
+            return entities.Where(x => x.estado_vehiculo == "ACT" && !x.es_eliminado).Select(VehiculoDataMapper.ToDataModel);
         }
 
         public async Task<IEnumerable<VehiculoDataModel>> GetByRangoPrecioAsync(decimal min, decimal max, CancellationToken ct = default)
         {
             var entities = await _unitOfWork.Vehiculos.GetAllAsync(ct);
-
-            return entities
-                .Where(x => x.precio_base_dia >= min && x.precio_base_dia <= max)
-                .Select(VehiculoDataMapper.ToDataModel);
+            return entities.Where(x => x.precio_base_dia >= min && x.precio_base_dia <= max).Select(VehiculoDataMapper.ToDataModel);
         }
-
-       
-
-        // =========================
-        // ESCRITURA
-        // =========================
 
         public async Task<VehiculoDataModel> CreateAsync(VehiculoDataModel model, CancellationToken ct = default)
         {
@@ -167,7 +139,6 @@ namespace Booking.Autos.DataManagement.Services
             }
             catch (DbUpdateException ex)
             {
-                // 🔥 Esto te dice el error REAL de SQL
                 var innerMessage = ex.InnerException?.Message ?? ex.Message;
                 throw new Exception($"DB ERROR: {innerMessage}", ex);
             }
@@ -211,10 +182,6 @@ namespace Booking.Autos.DataManagement.Services
             return true;
         }
 
-        // =========================
-        // OPERACIONES
-        // =========================
-
         public async Task<bool> UpdateKilometrajeAsync(int id, int nuevoKilometraje, CancellationToken ct = default)
         {
             var entity = await _unitOfWork.Vehiculos.GetByIdAsync(id, ct);
@@ -245,17 +212,10 @@ namespace Booking.Autos.DataManagement.Services
             return true;
         }
 
-        // =========================
-        // VALIDACIONES
-        // =========================
-
         public async Task<bool> ExistsByPlacaAsync(string placa, CancellationToken ct = default)
         {
             var entities = await _unitOfWork.Vehiculos.GetAllAsync(ct);
-
-            return entities.Any(x =>
-                x.placa_vehiculo == placa &&
-                !x.es_eliminado);
+            return entities.Any(x => x.placa_vehiculo == placa && !x.es_eliminado);
         }
 
         public async Task<bool> ExisteMarcaAsync(int idMarca, CancellationToken ct = default)

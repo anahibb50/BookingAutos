@@ -1,15 +1,9 @@
-﻿using Booking.Autos.Business.DTOs.Catalogos.Categoria;
-
-using Booking.Autos.DataManagement.Models;
+using Booking.Autos.Business.DTOs.Catalogos.Categoria;
 
 namespace Booking.Autos.Business.Interfaces
 {
     public interface ICategoriaService
     {
-        // =========================
-        // ESCRITURA
-        // =========================
-
         Task<CategoriaResponse> CrearAsync(
             CrearCategoriaRequest request,
             CancellationToken cancellationToken = default);
@@ -23,20 +17,12 @@ namespace Booking.Autos.Business.Interfaces
             string usuario,
             CancellationToken cancellationToken = default);
 
-        // =========================
-        // CONSULTAS
-        // =========================
-
         Task<CategoriaResponse> ObtenerPorIdAsync(
             int id,
             CancellationToken cancellationToken = default);
 
         Task<IReadOnlyList<CategoriaResponse>> ListarAsync(
             CancellationToken cancellationToken = default);
-
-        // =========================
-        // VALIDACIONES
-        // =========================
 
         Task<bool> ExistePorNombreAsync(
             string nombre,

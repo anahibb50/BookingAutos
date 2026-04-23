@@ -28,7 +28,7 @@ namespace Booking.Autos.DataAccess.Configurations
                 .IsRequired()
                 .HasMaxLength(20)
                 .IsUnicode(false)
-                .HasDefaultValue("ACTIVO");
+                .HasDefaultValue("PEN");
 
             builder.Property(e => e.observaciones)
                 .HasMaxLength(500)

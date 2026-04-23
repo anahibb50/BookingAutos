@@ -15,7 +15,5 @@ namespace Booking.Autos.Business.DTOs.ConductorReserva
         public bool EsPrincipal { get; set; }
 
         public string? Observaciones { get; set; }
-
-        public bool Eliminar { get; set; }
     }
 }

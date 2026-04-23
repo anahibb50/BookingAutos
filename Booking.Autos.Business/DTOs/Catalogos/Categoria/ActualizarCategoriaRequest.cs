@@ -1,12 +1,12 @@
-﻿namespace Booking.Autos.Business.DTOs.Catalogos.Categoria
+using System.Text.Json.Serialization;
+
+namespace Booking.Autos.Business.DTOs.Catalogos.Categoria
 {
     public class ActualizarCategoriaRequest
     {
         public int Id { get; set; }
 
+        [JsonPropertyName("nombreCategoria")]
         public string Nombre { get; set; }
-        public string? Descripcion { get; set; }
-
-        public string Estado { get; set; }
     }
 }

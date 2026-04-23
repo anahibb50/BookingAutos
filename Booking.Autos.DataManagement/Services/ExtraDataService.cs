@@ -1,6 +1,6 @@
-﻿using Booking.Autos.DataManagement.Interfaces;
-using Booking.Autos.DataManagement.Models.Extras;
+using Booking.Autos.DataManagement.Interfaces;
 using Booking.Autos.DataManagement.Mappers;
+using Booking.Autos.DataManagement.Models.Extras;
 
 namespace Booking.Autos.DataManagement.Services
 {
@@ -13,14 +13,9 @@ namespace Booking.Autos.DataManagement.Services
             _unitOfWork = unitOfWork;
         }
 
-        // =========================
-        // CONSULTAS
-        // =========================
-
         public async Task<IEnumerable<ExtraDataModel>> GetAllAsync(CancellationToken ct = default)
         {
             var entities = await _unitOfWork.Extras.GetAllAsync(ct);
-
             return ExtraDataMapper.ToDataModelList(entities);
         }
 
@@ -37,9 +32,7 @@ namespace Booking.Autos.DataManagement.Services
         {
             var entity = await _unitOfWork.Extras.GetByIdAsync(id, ct);
 
-            return entity == null
-                ? null
-                : ExtraDataMapper.ToDataModel(entity);
+            return entity == null ? null : ExtraDataMapper.ToDataModel(entity);
         }
 
         public async Task<IEnumerable<ExtraDataModel>> GetByNombreAsync(string nombre, CancellationToken ct = default)
@@ -50,10 +43,6 @@ namespace Booking.Autos.DataManagement.Services
                 .Where(x => x.nombre_extra.Contains(nombre) && !x.es_eliminado)
                 .Select(ExtraDataMapper.ToDataModel);
         }
-
-        // =========================
-        // ESCRITURA
-        // =========================
 
         public async Task<ExtraDataModel> CreateAsync(ExtraDataModel model, CancellationToken ct = default)
         {
@@ -80,15 +69,14 @@ namespace Booking.Autos.DataManagement.Services
             existing.nombre_extra = model.Nombre;
             existing.descripcion_extra = model.Descripcion;
             existing.valor_fijo = model.ValorFijo;
-
             existing.estado_extra = model.Estado;
-
             existing.modificado_por_usuario = model.ModificadoPorUsuario;
             existing.fecha_modificacion_utc = DateTime.UtcNow;
             existing.modificado_desde_ip = model.ModificadoDesdeIp;
-
             existing.origen_registro = model.OrigenRegistro;
             existing.motivo_inhabilitacion = model.MotivoInhabilitacion;
+            existing.es_eliminado = model.EsEliminado;
+            existing.fecha_inhabilitacion_utc = model.FechaInhabilitacionUtc;
 
             await _unitOfWork.Extras.UpdateAsync(existing, ct);
             await _unitOfWork.SaveChangesAsync(ct);
@@ -113,10 +101,6 @@ namespace Booking.Autos.DataManagement.Services
             return true;
         }
 
-        // =========================
-        // OPERACIÓN ESPECIAL
-        // =========================
-
         public async Task<bool> UpdatePrecioAsync(int id, decimal nuevoPrecio, CancellationToken ct = default)
         {
             var entity = await _unitOfWork.Extras.GetByIdAsync(id, ct);
@@ -132,7 +116,5 @@ namespace Booking.Autos.DataManagement.Services
 
             return true;
         }
-
-
     }
 }

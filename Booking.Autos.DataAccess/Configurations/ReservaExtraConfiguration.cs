@@ -39,7 +39,7 @@ namespace Booking.Autos.DataAccess.Configurations
                 .IsRequired()
                 .HasMaxLength(3)
                 .IsUnicode(false)
-                .HasDefaultValue("ACT");
+                .HasDefaultValue("PEN");
 
             // Auditoría
             builder.Property(e => e.fecha_creacion)

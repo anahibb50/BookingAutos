@@ -20,7 +20,7 @@ namespace Booking.Autos.Business.Mappers
                 EsPrincipal = request.EsPrincipal,
                 Observaciones = request.Observaciones,
 
-                Estado = "ACT",
+                Estado = "PEN",
 
                 FechaRegistroUtc = DateTime.UtcNow
             };

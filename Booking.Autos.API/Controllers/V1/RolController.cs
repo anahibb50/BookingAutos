@@ -23,6 +23,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 📌 CREAR
         // ============================================================
+        [Authorize(Roles = "ADMIN")]
         [HttpPost]
         public async Task<IActionResult> Crear(
             [FromBody] CrearRolRequest request,
@@ -39,6 +40,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // ✏️ ACTUALIZAR
         // ============================================================
+        [Authorize(Roles = "ADMIN")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Actualizar(
             int id,
@@ -58,6 +60,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // ❌ ELIMINAR
         // ============================================================
+        [Authorize(Roles = "ADMIN")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Eliminar(
             int id,
@@ -71,6 +74,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 OBTENER POR ID
         // ============================================================
+        [Authorize(Roles = "ADMIN")]
         [HttpGet("{id}")]
         public async Task<IActionResult> ObtenerPorId(
             int id,
@@ -84,6 +88,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 📄 LISTAR
         // ============================================================
+        [Authorize(Roles = "ADMIN")]
         [HttpGet]
         public async Task<IActionResult> Listar(CancellationToken ct)
         {
@@ -95,6 +100,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 FILTRAR
         // ============================================================
+        [Authorize(Roles = "ADMIN")]
         [HttpPost("filtrar")]
         public async Task<IActionResult> Filtrar(
             [FromBody] RolFiltroRequest request,

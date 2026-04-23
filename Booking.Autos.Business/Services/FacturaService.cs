@@ -1,10 +1,11 @@
-﻿using Booking.Autos.Business.DTOs.Factura;
+using Booking.Autos.Business.DTOs.Factura;
 using Booking.Autos.Business.Exceptions;
 using Booking.Autos.Business.Interfaces;
 using Booking.Autos.Business.Mappers;
+using Booking.Autos.Business.Validators;
+using Booking.Autos.DataManagement.Common;
 using Booking.Autos.DataManagement.Interfaces;
 using Booking.Autos.DataManagement.Models.Facturas;
-using Booking.Autos.DataManagement.Common;
 
 namespace Booking.Autos.Business.Services
 {
@@ -21,98 +22,91 @@ namespace Booking.Autos.Business.Services
             _reservaDataService = reservaDataService;
         }
 
-        // =========================
-        // CREAR
-        // =========================
-        public async Task<FacturaResponse> CrearAsync(
-            CrearFacturaRequest request,
-            CancellationToken ct = default)
+        public async Task<FacturaResponse> CrearAsync(CrearFacturaRequest request, CancellationToken ct = default)
         {
-            var reserva = await _reservaDataService
-                .GetByIdAsync(request.IdReserva, ct);
+            var errors = FacturaValidator.ValidarCreacion(request);
+            if (errors.Any())
+                throw new ValidationException(errors.ToList());
 
+            var reserva = await _reservaDataService.GetByIdAsync(request.IdReserva, ct);
             if (reserva is null)
                 throw new NotFoundException("Reserva", request.IdReserva);
 
-            var existente = await _dataService
-                .GetByReservaAsync(request.IdReserva, ct);
-
+            var existente = await _dataService.GetByReservaAsync(request.IdReserva, ct);
             if (existente != null)
-                throw new ValidationException(new List<string>
-                {
-                    "La reserva ya tiene una factura."
-                });
+                throw new ValidationException(new List<string> { "La reserva ya tiene una factura." });
 
             var model = FacturaBusinessMapper.ToDataModel(request);
-
-            // 🔥 completar valores desde reserva
+            model.IdCliente = reserva.IdCliente;
             model.Subtotal = reserva.Subtotal;
             model.Iva = reserva.Iva;
             model.Total = reserva.Total;
 
-            var creada = await _dataService.CreateAsync(model, ct);
+            if (model.Subtotal < 0 || model.Iva < 0 || model.Total < 0)
+                throw new ValidationException(new List<string> { "Los totales de la factura no pueden ser negativos." });
 
+            var creada = await _dataService.CreateAsync(model, ct);
             return FacturaBusinessMapper.ToResponse(creada);
         }
 
-        // =========================
-        // OBTENER POR ID
-        // =========================
-        public async Task<FacturaResponse> ObtenerPorIdAsync(
-            int id,
-            CancellationToken ct = default)
+        public async Task<FacturaResponse> ActualizarAsync(ActualizarFacturaRequest request, CancellationToken ct = default)
+        {
+            var errors = FacturaValidator.ValidarActualizacion(request);
+            if (errors.Any())
+                throw new ValidationException(errors.ToList());
+
+            var existente = await _dataService.GetByIdAsync(request.Id, ct);
+            if (existente is null)
+                throw new NotFoundException("Factura", request.Id);
+
+            var model = FacturaBusinessMapper.ToDataModel(request);
+            model.Guid = existente.Guid;
+            model.IdReserva = existente.IdReserva;
+            model.IdCliente = existente.IdCliente;
+            model.Subtotal = existente.Subtotal;
+            model.Iva = existente.Iva;
+            model.Total = existente.Total;
+            model.Estado = existente.Estado;
+            model.FechaCreacion = existente.FechaCreacion;
+            model.FechaAprobacion = existente.FechaAprobacion;
+            model.FechaAnulacion = existente.FechaAnulacion;
+            model.MotivoAnulacion = existente.MotivoAnulacion;
+            model.EsEliminado = existente.EsEliminado;
+            model.FechaEliminacion = existente.FechaEliminacion;
+            model.Origen = existente.Origen;
+
+            var actualizada = await _dataService.UpdateAsync(model, ct);
+            return FacturaBusinessMapper.ToResponse(actualizada);
+        }
+
+        public async Task<FacturaResponse> ObtenerPorIdAsync(int id, CancellationToken ct = default)
         {
             var factura = await _dataService.GetByIdAsync(id, ct);
-
             if (factura is null)
                 throw new NotFoundException("Factura", id);
 
             return FacturaBusinessMapper.ToResponse(factura);
         }
 
-        // =========================
-        // LISTAR
-        // =========================
-        public async Task<IReadOnlyList<FacturaResponse>> ListarAsync(
-            CancellationToken ct = default)
+        public async Task<IReadOnlyList<FacturaResponse>> ListarAsync(CancellationToken ct = default)
         {
             var list = await _dataService.GetAllAsync(ct);
-
             return FacturaBusinessMapper.ToResponseList(list);
         }
 
-        // =========================
-        // POR CLIENTE
-        // =========================
-        public async Task<IReadOnlyList<FacturaResponse>> ObtenerPorClienteAsync(
-            int idCliente,
-            CancellationToken ct = default)
+        public async Task<IReadOnlyList<FacturaResponse>> ObtenerPorClienteAsync(int idCliente, CancellationToken ct = default)
         {
             var list = await _dataService.GetByClienteAsync(idCliente, ct);
-
             return FacturaBusinessMapper.ToResponseList(list);
         }
 
-        // =========================
-        // POR RESERVA
-        // =========================
-        public async Task<FacturaResponse?> ObtenerPorReservaAsync(
-            int idReserva,
-            CancellationToken ct = default)
+        public async Task<FacturaResponse?> ObtenerPorReservaAsync(int idReserva, CancellationToken ct = default)
         {
             var factura = await _dataService.GetByReservaAsync(idReserva, ct);
-
-            return factura is null
-                ? null
-                : FacturaBusinessMapper.ToResponse(factura);
+            return factura is null ? null : FacturaBusinessMapper.ToResponse(factura);
         }
 
-        // =========================
-        // BUSCAR (PAGINADO)
-        // =========================
-        public async Task<DataPagedResult<FacturaResponse>> BuscarAsync(
-            FacturaFiltroRequest request,
-            CancellationToken ct = default)
+        public async Task<DataPagedResult<FacturaResponse>> BuscarAsync(FacturaFiltroRequest request, CancellationToken ct = default)
         {
             var filtro = new FacturaFiltroDataModel
             {
@@ -138,12 +132,7 @@ namespace Booking.Autos.Business.Services
             };
         }
 
-        // =========================
-        // APROBAR
-        // =========================
-        public async Task<bool> AprobarAsync(
-            int id,
-            CancellationToken ct = default)
+        public async Task<bool> AprobarAsync(int id, CancellationToken ct = default)
         {
             var factura = await _dataService.GetByIdAsync(id, ct);
 
@@ -151,21 +140,12 @@ namespace Booking.Autos.Business.Services
                 throw new NotFoundException("Factura", id);
 
             if (factura.Estado == "APR")
-                throw new ValidationException(new List<string>
-                {
-                    "La factura ya está aprobada."
-                });
+                throw new ValidationException(new List<string> { "La factura ya está aprobada." });
 
             return await _dataService.AprobarAsync(id, ct);
         }
 
-        // =========================
-        // ANULAR
-        // =========================
-        public async Task<bool> AnularAsync(
-            int id,
-            string motivo,
-            CancellationToken ct = default)
+        public async Task<bool> AnularAsync(int id, string motivo, CancellationToken ct = default)
         {
             var factura = await _dataService.GetByIdAsync(id, ct);
 
@@ -173,10 +153,7 @@ namespace Booking.Autos.Business.Services
                 throw new NotFoundException("Factura", id);
 
             if (factura.Estado == "ANU")
-                throw new ValidationException(new List<string>
-                {
-                    "La factura ya está anulada."
-                });
+                throw new ValidationException(new List<string> { "La factura ya está anulada." });
 
             return await _dataService.AnularAsync(id, motivo, ct);
         }

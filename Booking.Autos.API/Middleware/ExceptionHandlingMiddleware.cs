@@ -1,5 +1,7 @@
-﻿using Booking.Autos.API.Models.Common;
+using Booking.Autos.API.Models.Common;
 using Booking.Autos.Business.Exceptions;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Text.Json;
 
@@ -27,7 +29,6 @@ namespace Booking.Autos.API.Middleware
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error no controlado");
-
                 await HandleExceptionAsync(context, ex);
             }
         }
@@ -43,10 +44,7 @@ namespace Booking.Autos.API.Middleware
             {
                 case ValidationException validationEx:
                     statusCode = HttpStatusCode.BadRequest;
-                    response = new ApiErrorResponse(
-                        "Errores de validación",
-                        validationEx.Errors
-                    );
+                    response = new ApiErrorResponse("Errores de validación", validationEx.Errors);
                     break;
 
                 case NotFoundException notFoundEx:
@@ -64,6 +62,11 @@ namespace Booking.Autos.API.Middleware
                     response = new ApiErrorResponse(businessEx.Message);
                     break;
 
+                case DbUpdateException dbUpdateEx when IsUniqueConstraintViolation(dbUpdateEx):
+                    statusCode = HttpStatusCode.Conflict;
+                    response = new ApiErrorResponse("Ya existe un registro con un valor único duplicado.");
+                    break;
+
                 default:
                     response = new ApiErrorResponse(ex.Message);
                     break;
@@ -77,6 +80,12 @@ namespace Booking.Autos.API.Middleware
             });
 
             await context.Response.WriteAsync(json);
+        }
+
+        private static bool IsUniqueConstraintViolation(DbUpdateException exception)
+        {
+            return exception.InnerException is SqlException sqlException
+                && (sqlException.Number == 2601 || sqlException.Number == 2627);
         }
     }
 }

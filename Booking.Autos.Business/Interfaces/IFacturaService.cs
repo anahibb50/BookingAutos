@@ -1,22 +1,17 @@
-﻿using Booking.Autos.Business.DTOs.Factura;
-using Booking.Autos.DataManagement.Models;
+using Booking.Autos.Business.DTOs.Factura;
 using Booking.Autos.DataManagement.Common;
 
 namespace Booking.Autos.Business.Interfaces
 {
     public interface IFacturaService
     {
-        // =========================
-        // CREACIÓN
-        // =========================
-
         Task<FacturaResponse> CrearAsync(
             CrearFacturaRequest request,
             CancellationToken cancellationToken = default);
 
-        // =========================
-        // CONSULTAS
-        // =========================
+        Task<FacturaResponse> ActualizarAsync(
+            ActualizarFacturaRequest request,
+            CancellationToken cancellationToken = default);
 
         Task<FacturaResponse> ObtenerPorIdAsync(
             int id,
@@ -25,24 +20,17 @@ namespace Booking.Autos.Business.Interfaces
         Task<IReadOnlyList<FacturaResponse>> ListarAsync(
             CancellationToken cancellationToken = default);
 
-        // 🔥 POR CLIENTE
         Task<IReadOnlyList<FacturaResponse>> ObtenerPorClienteAsync(
             int idCliente,
             CancellationToken cancellationToken = default);
 
-        // 🔥 POR RESERVA (CLAVE)
         Task<FacturaResponse?> ObtenerPorReservaAsync(
             int idReserva,
             CancellationToken cancellationToken = default);
 
-        // 🔥 PAGINACIÓN
         Task<DataPagedResult<FacturaResponse>> BuscarAsync(
             FacturaFiltroRequest request,
             CancellationToken cancellationToken = default);
-
-        // =========================
-        // ACCIONES DE NEGOCIO 🔥
-        // =========================
 
         Task<bool> AprobarAsync(
             int id,

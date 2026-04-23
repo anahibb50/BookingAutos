@@ -1,4 +1,4 @@
-﻿using Booking.Autos.DataAccess.Context;
+using Booking.Autos.DataAccess.Context;
 using Booking.Autos.DataAccess.Entities;
 using Booking.Autos.DataAccess.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -13,8 +13,6 @@ namespace Booking.Autos.DataAccess.Repositories
         {
             _context = context;
         }
-
-        // --- Lectura ---
 
         public async Task<IReadOnlyList<CategoriaEntity>> GetAllAsync(CancellationToken cancellationToken = default)
         {
@@ -44,8 +42,6 @@ namespace Booking.Autos.DataAccess.Repositories
                 .FirstOrDefaultAsync(c => c.nombre_categoria == nombre && !c.es_eliminado, cancellationToken);
         }
 
-        // --- Escritura ---
-
         public async Task AddAsync(CategoriaEntity categoria, CancellationToken cancellationToken = default)
         {
             await _context.Categorias.AddAsync(categoria, cancellationToken);
@@ -54,9 +50,16 @@ namespace Booking.Autos.DataAccess.Repositories
 
         public async Task UpdateAsync(CategoriaEntity categoria, CancellationToken cancellationToken = default)
         {
-            // ✅ Buscar con tracking y actualizar solo los campos necesarios
-            categoria.fecha_actualizacion = DateTime.UtcNow;
+            var existing = await _context.Categorias
+                .FirstOrDefaultAsync(c => c.id_categoria == categoria.id_categoria && !c.es_eliminado, cancellationToken);
 
+            if (existing == null)
+                return;
+
+            existing.nombre_categoria = categoria.nombre_categoria;
+            existing.es_eliminado = categoria.es_eliminado;
+            existing.fecha_eliminacion = categoria.fecha_eliminacion;
+            existing.fecha_actualizacion = DateTime.UtcNow;
 
             await _context.SaveChangesAsync(cancellationToken);
         }
@@ -66,15 +69,15 @@ namespace Booking.Autos.DataAccess.Repositories
             var existing = await _context.Categorias
                 .FirstOrDefaultAsync(c => c.id_categoria == id && !c.es_eliminado, cancellationToken);
 
-            if (existing == null) return;
+            if (existing == null)
+                return;
 
             existing.es_eliminado = true;
             existing.fecha_eliminacion = DateTime.UtcNow;
+            existing.fecha_actualizacion = DateTime.UtcNow;
 
             await _context.SaveChangesAsync(cancellationToken);
         }
-
-        // --- Validaciones ---
 
         public async Task<bool> ExistsByNombreAsync(string nombre, CancellationToken cancellationToken = default)
         {

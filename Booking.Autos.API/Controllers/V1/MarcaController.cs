@@ -24,6 +24,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 📌 CREAR
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpPost]
         public async Task<IActionResult> Crear(
             [FromBody] CrearMarcaRequest request,
@@ -40,6 +41,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // ✏️ ACTUALIZAR
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Actualizar(
             int id,
@@ -59,6 +61,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // ❌ ELIMINAR LÓGICO
         // ============================================================
+        [Authorize(Roles = "ADMIN")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Eliminar(
             int id,
@@ -74,6 +77,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 OBTENER POR ID
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpGet("{id}")]
         public async Task<IActionResult> ObtenerPorId(
             int id,
@@ -87,6 +91,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 📄 LISTAR
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpGet]
         public async Task<IActionResult> Listar(CancellationToken ct)
         {
@@ -98,6 +103,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 POR NOMBRE
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpGet("por-nombre")]
         public async Task<IActionResult> ObtenerPorNombre(
             [FromQuery] string nombre,
@@ -111,6 +117,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 VALIDACIÓN
         // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpGet("existe")]
         public async Task<IActionResult> Existe(
             [FromQuery] string nombre,

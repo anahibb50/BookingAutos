@@ -1,4 +1,4 @@
-﻿using Booking.Autos.Business.DTOs.ConductorReserva;
+using Booking.Autos.Business.DTOs.ConductorReserva;
 using Booking.Autos.Business.DTOs.Reserva;
 using Booking.Autos.Business.DTOs.ReservaExtra;
 using Booking.Autos.Business.Exceptions;
@@ -28,7 +28,7 @@ namespace Booking.Autos.Business.Services
             IConductorReservaService conductorService,
             IExtraDataService extraDataService,
             IVehiculoDataService vehiculoDataService,
-            IClienteDataService clienteDataService,                // 👈 nuevo
+            IClienteDataService clienteDataService,
             ILocalizacionDataService localizacionDataService,
             IConductorDataService conductorDataService)
         {
@@ -37,36 +37,28 @@ namespace Booking.Autos.Business.Services
             _extraDataService = extraDataService;
             _conductorService = conductorService;
             _vehiculoDataService = vehiculoDataService;
-            _clienteDataService = clienteDataService;            // 👈 nuevo
+            _clienteDataService = clienteDataService;
             _localizacionDataService = localizacionDataService;
             _conductorDataService = conductorDataService;
         }
 
-        // =========================
-        // CREAR
-        // =========================
-        public async Task<ReservaResponse> CrearAsync(
-            CrearReservaRequest request,
-            CancellationToken ct = default)
+        public async Task<ReservaResponse> CrearAsync(CrearReservaRequest request, CancellationToken ct = default)
         {
             var errors = ReservaValidator.ValidarCreacion(request);
-
             if (errors.Any())
                 throw new ValidationException(errors.ToList());
-            
+
             await ValidarReferenciasAsync(request, ct);
 
             var disponible = await _reservaDataService.IsVehiculoDisponibleAsync(
                 request.IdVehiculo, request.FechaInicio, request.FechaFin, ct);
 
             if (!disponible)
-                throw new BusinessException("Vehículo no disponible.");
-
+                throw new ValidationException(new List<string> { "El vehículo no está disponible para el rango de fechas solicitado." });
 
             var model = ReservaBusinessMapper.ToDataModel(request);
             model.CreadoPorUsuario = "SYSTEM";
             model.ServicioOrigen = "API";
-
 
             var (subtotal, iva, total) = await CalcularTotalesAsync(
                 request.IdVehiculo,
@@ -77,10 +69,9 @@ namespace Booking.Autos.Business.Services
             model.Subtotal = subtotal;
             model.Iva = iva;
             model.Total = total;
-            
+
             var reserva = await _reservaDataService.CreateAsync(model, ct);
 
-            // 🔥 EXTRAS
             if (request.Extras != null)
             {
                 foreach (var extra in request.Extras)
@@ -90,7 +81,7 @@ namespace Booking.Autos.Business.Services
                         IdReserva = reserva.Id,
                         IdExtra = extra.IdExtra,
                         Cantidad = extra.Cantidad,
-                        Estado = "ACT",
+                        Estado = "PEN",
                         EsEliminado = false,
                         FechaCreacion = DateTime.UtcNow,
                         FechaActualizacion = DateTime.UtcNow
@@ -98,7 +89,6 @@ namespace Booking.Autos.Business.Services
                 }
             }
 
-            // 🔥 CONDUCTORES
             if (request.Conductores != null)
             {
                 foreach (var conductor in request.Conductores)
@@ -107,72 +97,102 @@ namespace Booking.Autos.Business.Services
                 }
             }
 
-
             return await ObtenerPorIdAsync(reserva.Id, ct);
         }
 
-        // =========================
-        // ACTUALIZAR
-        // =========================
-        public async Task<ReservaResponse> ActualizarAsync(
-            ActualizarReservaRequest request,
-            CancellationToken ct = default)
+        public async Task<ReservaResponse> ActualizarAsync(ActualizarReservaRequest request, CancellationToken ct = default)
         {
-            var existente = await _reservaDataService.GetByIdAsync(request.Id, ct);
+            var errors = ReservaValidator.ValidarActualizacion(request);
+            if (errors.Any())
+                throw new ValidationException(errors.ToList());
 
+            var existente = await _reservaDataService.GetByIdAsync(request.Id, ct);
             if (existente == null)
                 throw new NotFoundException("Reserva", request.Id);
 
-            var model = ReservaBusinessMapper.ToDataModel(request);
+            if (existente.Estado == "CON" || existente.Estado == "CAN")
+                throw new ValidationException(new List<string> { "No se puede actualizar una reserva confirmada o cancelada." });
 
+            await ValidarReferenciasActualizacionAsync(request, ct);
+            await ValidarDisponibilidadActualizacionAsync(existente.IdVehiculo, request.Id, request.FechaInicio, request.FechaFin, ct);
+
+            var cantidadDias = Math.Max(1, (request.FechaFin.Date - request.FechaInicio.Date).Days);
+            var estadoDetalle = existente.Estado == "CON" ? "CON" : "PEN";
+
+            var model = ReservaBusinessMapper.ToDataModel(request);
             model.IdCliente = existente.IdCliente;
             model.IdVehiculo = existente.IdVehiculo;
+            model.CantidadDias = cantidadDias;
+            model.Codigo = existente.Codigo;
+            model.Guid = existente.Guid;
+            model.FechaReservaUtc = existente.FechaReservaUtc;
+            model.Estado = existente.Estado;
+            model.CreadoPorUsuario = existente.CreadoPorUsuario;
+            model.ServicioOrigen = existente.ServicioOrigen;
+            model.OrigenCanal = existente.OrigenCanal;
+            model.EsEliminado = existente.EsEliminado;
+            model.ModificadoPorUsuario = "SYSTEM";
+            model.ModificacionIp = "127.0.0.1";
 
-            var actualizado = await _reservaDataService.UpdateAsync(model, ct);
-
-            // 🔥 actualizar conductores
             if (request.Conductores != null)
             {
-                foreach (var c in request.Conductores)
+                foreach (var conductor in request.Conductores)
                 {
-                    await _conductorService.ActualizarAsync(c, ct);
+                    conductor.IdReserva = request.Id;
+                    await _conductorService.ActualizarAsync(conductor, ct);
                 }
             }
 
-            // 🔥 actualizar extras
             if (request.Extras != null)
             {
-                foreach (var e in request.Extras)
+                var extrasExistentes = (await _reservaExtraDataService.GetByReservaAsync(request.Id, ct)).ToList();
+
+                foreach (var extra in request.Extras)
                 {
-                    if (e.Eliminar && e.Id.HasValue)
-                        await _reservaExtraDataService.RemoveAsync(e.Id.Value, ct);
-                    else if (e.Id.HasValue)
+                    var detalleExistente = extrasExistentes.FirstOrDefault(x => x.IdExtra == extra.IdExtra);
+
+                    if (detalleExistente != null)
+                    {
                         await _reservaExtraDataService.UpdateAsync(new ReservaExtraDataModel
                         {
-                            Id = e.Id.Value,
-                            IdExtra = e.IdExtra,
-                            Cantidad = e.Cantidad,
+                            Id = detalleExistente.Id,
+                            IdExtra = extra.IdExtra,
+                            Cantidad = extra.Cantidad,
+                            Estado = estadoDetalle,
                             FechaActualizacion = DateTime.UtcNow
                         }, ct);
+                    }
                     else
+                    {
                         await _reservaExtraDataService.AddAsync(new ReservaExtraDataModel
                         {
                             IdReserva = request.Id,
-                            IdExtra = e.IdExtra,
-                            Cantidad = e.Cantidad,
-                            Estado = "ACT",
+                            IdExtra = extra.IdExtra,
+                            Cantidad = extra.Cantidad,
+                            Estado = estadoDetalle,
+                            EsEliminado = false,
                             FechaCreacion = DateTime.UtcNow,
                             FechaActualizacion = DateTime.UtcNow
                         }, ct);
+                    }
                 }
             }
+
+            var vehiculo = await _vehiculoDataService.GetByIdAsync(existente.IdVehiculo, ct)
+                ?? throw new NotFoundException("Vehículo", existente.IdVehiculo);
+
+            var subtotalExtras = await _reservaExtraDataService.GetSubtotalByReservaAsync(request.Id, ct);
+            var subtotalVehiculo = vehiculo.PrecioBaseDia * cantidadDias;
+
+            model.Subtotal = subtotalVehiculo + subtotalExtras;
+            model.Iva = model.Subtotal * 0.15m;
+            model.Total = model.Subtotal + model.Iva;
+
+            await _reservaDataService.UpdateAsync(model, ct);
 
             return await ObtenerPorIdAsync(request.Id, ct);
         }
 
-        // =========================
-        // CONSULTAS
-        // =========================
         public async Task<ReservaResponse> ObtenerPorIdAsync(int id, CancellationToken ct = default)
         {
             var model = await _reservaDataService.GetByIdAsync(id, ct)
@@ -214,7 +234,14 @@ namespace Booking.Autos.Business.Services
                 {
                     IdCliente = request.IdCliente,
                     IdVehiculo = request.IdVehiculo,
+                    IdLocalizacionRecogida = request.IdLocalizacionRecogida,
+                    IdLocalizacionEntrega = request.IdLocalizacionEntrega,
+                    FechaInicioDesde = request.FechaInicioDesde,
+                    FechaInicioHasta = request.FechaInicioHasta,
+                    FechaFinDesde = request.FechaFinDesde,
+                    FechaFinHasta = request.FechaFinHasta,
                     Estado = request.Estado,
+                    CodigoReserva = request.CodigoReserva,
                     Page = request.Page,
                     PageSize = request.PageSize
                 }, ct);
@@ -227,29 +254,36 @@ namespace Booking.Autos.Business.Services
             );
         }
 
-        // =========================
-        // DISPONIBILIDAD
-        // =========================
         public async Task<bool> VerificarDisponibilidadVehiculoAsync(
             int idVehiculo,
             DateTime fechaInicio,
             DateTime fechaFin,
             CancellationToken ct = default)
         {
-            return await _reservaDataService.IsVehiculoDisponibleAsync(
-                idVehiculo, fechaInicio, fechaFin, ct);
+            return await _reservaDataService.IsVehiculoDisponibleAsync(idVehiculo, fechaInicio, fechaFin, ct);
         }
 
-        // =========================
-        // ACCIONES DE NEGOCIO
-        // =========================
         public async Task<bool> ConfirmarAsync(int id, CancellationToken ct = default)
         {
+            var reserva = await _reservaDataService.GetByIdAsync(id, ct)
+                ?? throw new NotFoundException("Reserva", id);
+
+            var errors = ReservaValidator.ValidarConfirmacion(reserva.Estado);
+            if (errors.Any())
+                throw new ValidationException(errors.ToList());
+
             return await _reservaDataService.ConfirmarAsync(id, ct);
         }
 
         public async Task<bool> CancelarAsync(int id, string motivo, CancellationToken ct = default)
         {
+            var reserva = await _reservaDataService.GetByIdAsync(id, ct)
+                ?? throw new NotFoundException("Reserva", id);
+
+            var errors = ReservaValidator.ValidarCancelacion(reserva.Estado, motivo);
+            if (errors.Any())
+                throw new ValidationException(errors.ToList());
+
             return await _reservaDataService.CancelarAsync(id, motivo, ct);
         }
 
@@ -259,14 +293,11 @@ namespace Booking.Autos.Business.Services
             List<CrearReservaExtraDetalleRequest>? extrasRequest,
             CancellationToken ct)
         {
-            // 🔹 1. Vehículo
             var vehiculo = await _vehiculoDataService.GetByIdAsync(idVehiculo, ct);
             if (vehiculo == null)
                 throw new NotFoundException("Vehículo", idVehiculo);
 
             var subtotalVehiculo = vehiculo.PrecioBaseDia * cantidadDias;
-
-            // 🔹 2. Extras
             decimal subtotalExtras = 0;
 
             if (extrasRequest != null && extrasRequest.Any())
@@ -281,7 +312,6 @@ namespace Booking.Autos.Business.Services
                 }
             }
 
-            // 🔹 3. Totales
             var subtotal = subtotalVehiculo + subtotalExtras;
             var iva = subtotal * 0.15m;
             var total = subtotal + iva;
@@ -289,9 +319,7 @@ namespace Booking.Autos.Business.Services
             return (subtotal, iva, total);
         }
 
-        private async Task ValidarReferenciasAsync(
-            CrearReservaRequest request,
-            CancellationToken ct)
+        private async Task ValidarReferenciasAsync(CrearReservaRequest request, CancellationToken ct)
         {
             var errors = new List<string>();
 
@@ -313,8 +341,23 @@ namespace Booking.Autos.Business.Services
 
             if (request.Extras != null && request.Extras.Any())
             {
+                var extrasDuplicados = request.Extras
+                    .GroupBy(x => x.IdExtra)
+                    .Where(x => x.Count() > 1)
+                    .Select(x => x.Key)
+                    .ToList();
+
+                if (extrasDuplicados.Any())
+                    errors.Add($"No se permiten extras duplicados en la reserva: {string.Join(", ", extrasDuplicados)}.");
+
                 foreach (var extra in request.Extras)
                 {
+                    if (extra.Cantidad <= 0)
+                    {
+                        errors.Add($"La cantidad del extra {extra.IdExtra} debe ser mayor a 0.");
+                        continue;
+                    }
+
                     var extraDb = await _extraDataService.GetByIdAsync(extra.IdExtra, ct);
                     if (extraDb == null)
                         errors.Add($"No existe el extra con id {extra.IdExtra}.");
@@ -323,8 +366,23 @@ namespace Booking.Autos.Business.Services
 
             if (request.Conductores != null && request.Conductores.Any())
             {
+                var conductoresDuplicados = request.Conductores
+                    .GroupBy(x => x.IdConductor)
+                    .Where(x => x.Count() > 1)
+                    .Select(x => x.Key)
+                    .ToList();
+
+                if (conductoresDuplicados.Any())
+                    errors.Add($"No se permiten conductores duplicados en la reserva: {string.Join(", ", conductoresDuplicados)}.");
+
                 foreach (var conductor in request.Conductores)
                 {
+                    if (string.IsNullOrWhiteSpace(conductor.Rol))
+                    {
+                        errors.Add($"El rol del conductor {conductor.IdConductor} es obligatorio.");
+                        continue;
+                    }
+
                     var conductorDb = await _conductorDataService.GetByIdAsync(conductor.IdConductor, ct);
                     if (conductorDb == null)
                         errors.Add($"No existe el conductor con id {conductor.IdConductor}.");
@@ -333,6 +391,91 @@ namespace Booking.Autos.Business.Services
 
             if (errors.Any())
                 throw new ValidationException(errors);
+        }
+
+        private async Task ValidarReferenciasActualizacionAsync(ActualizarReservaRequest request, CancellationToken ct)
+        {
+            var errors = new List<string>();
+
+            var locRecogida = await _localizacionDataService.GetByIdAsync(request.IdLocalizacionRecogida, ct);
+            if (locRecogida == null)
+                errors.Add($"No existe la localización de recogida con id {request.IdLocalizacionRecogida}.");
+
+            var locEntrega = await _localizacionDataService.GetByIdAsync(request.IdLocalizacionEntrega, ct);
+            if (locEntrega == null)
+                errors.Add($"No existe la localización de entrega con id {request.IdLocalizacionEntrega}.");
+
+            if (request.Extras != null)
+            {
+                var extrasDuplicados = request.Extras
+                    .GroupBy(x => x.IdExtra)
+                    .Where(x => x.Count() > 1)
+                    .Select(x => x.Key)
+                    .ToList();
+
+                if (extrasDuplicados.Any())
+                    errors.Add($"No se permiten extras duplicados en la reserva: {string.Join(", ", extrasDuplicados)}.");
+
+                foreach (var extra in request.Extras)
+                {
+                    if (extra.Cantidad <= 0)
+                    {
+                        errors.Add($"La cantidad del extra {extra.IdExtra} debe ser mayor a 0.");
+                        continue;
+                    }
+
+                    var extraDb = await _extraDataService.GetByIdAsync(extra.IdExtra, ct);
+                    if (extraDb == null)
+                        errors.Add($"No existe el extra con id {extra.IdExtra}.");
+                }
+            }
+
+            if (request.Conductores != null)
+            {
+                var conductoresDuplicados = request.Conductores
+                    .GroupBy(x => x.IdConductor)
+                    .Where(x => x.Count() > 1)
+                    .Select(x => x.Key)
+                    .ToList();
+
+                if (conductoresDuplicados.Any())
+                    errors.Add($"No se permiten conductores duplicados en la reserva: {string.Join(", ", conductoresDuplicados)}.");
+
+                foreach (var conductor in request.Conductores)
+                {
+                    if (string.IsNullOrWhiteSpace(conductor.Rol))
+                    {
+                        errors.Add($"El rol del conductor {conductor.IdConductor} es obligatorio.");
+                        continue;
+                    }
+
+                    var conductorDb = await _conductorDataService.GetByIdAsync(conductor.IdConductor, ct);
+                    if (conductorDb == null)
+                        errors.Add($"No existe el conductor con id {conductor.IdConductor}.");
+                }
+            }
+
+            if (errors.Any())
+                throw new ValidationException(errors);
+        }
+
+        private async Task ValidarDisponibilidadActualizacionAsync(
+            int idVehiculo,
+            int idReservaActual,
+            DateTime fechaInicio,
+            DateTime fechaFin,
+            CancellationToken ct)
+        {
+            var reservasVehiculo = await _reservaDataService.GetByVehiculoAsync(idVehiculo, ct);
+
+            var conflicto = reservasVehiculo.Any(r =>
+                r.Id != idReservaActual &&
+                r.Estado != "CAN" &&
+                fechaInicio < r.FechaFin &&
+                fechaFin > r.FechaInicio);
+
+            if (conflicto)
+                throw new ValidationException(new List<string> { "El vehículo no está disponible para el nuevo rango de fechas solicitado." });
         }
     }
 }

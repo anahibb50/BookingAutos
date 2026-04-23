@@ -1,23 +1,40 @@
-﻿namespace Booking.Autos.Business.DTOs.Conductor
+using System.Text.Json.Serialization;
+
+namespace Booking.Autos.Business.DTOs.Conductor
 {
     public class ConductorFiltroRequest
     {
-        // 🔍 Búsquedas principales
         public string? NumeroIdentificacion { get; set; }
         public string? NumeroLicencia { get; set; }
-
-        // 👤 Nombre (búsqueda parcial)
         public string? Nombre { get; set; }
-
-        // 🟢 Estado
         public string? Estado { get; set; }
-
-        // 📅 Edad (rango opcional)
         public int? EdadMin { get; set; }
         public int? EdadMax { get; set; }
 
-        // 📄 Paginación 🔥
+        [JsonIgnore]
         public int Page { get; set; } = 1;
+
+        [JsonIgnore]
         public int PageSize { get; set; } = 10;
+
+        [JsonPropertyName("pagina")]
+        public int? Pagina
+        {
+            set
+            {
+                if (value.HasValue)
+                    Page = value.Value;
+            }
+        }
+
+        [JsonPropertyName("tamano")]
+        public int? Tamano
+        {
+            set
+            {
+                if (value.HasValue)
+                    PageSize = value.Value;
+            }
+        }
     }
 }
