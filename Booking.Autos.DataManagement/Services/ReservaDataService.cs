@@ -126,12 +126,7 @@ namespace Booking.Autos.DataManagement.Services
             existing.hora_fin = model.HoraFin;
             existing.id_localizacion_recogida = model.IdLocalizacionRecogida;
             existing.id_localizacion_entrega = model.IdLocalizacionEntrega;
-            existing.cantidad_dias = model.CantidadDias;
-            existing.subtotal_reserva = model.Subtotal;
-            existing.valor_iva = model.Iva;
-            existing.total_reserva = model.Total;
             existing.descripcion_reserva = model.Descripcion;
-            existing.origen_canal_reserva = model.OrigenCanal;
             existing.fecha_modificacion_utc = DateTime.UtcNow;
             existing.modificado_por_usuario = model.ModificadoPorUsuario;
             existing.modificacion_ip = model.ModificacionIp;

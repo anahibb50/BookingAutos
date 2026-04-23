@@ -119,7 +119,6 @@ namespace Booking.Autos.DataAccess.Repositories
 
         public async Task UpdateAsync(ReservaEntity reserva, CancellationToken cancellationToken = default)
         {
-            _context.Reservas.Update(reserva);
             await _context.SaveChangesAsync(cancellationToken);
         }
 

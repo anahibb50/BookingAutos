@@ -1,4 +1,3 @@
-using Booking.Autos.Business.DTOs.ConductorReserva;
 using Booking.Autos.Business.DTOs.Reserva;
 using Booking.Autos.Business.DTOs.ReservaExtra;
 using Booking.Autos.Business.Exceptions;
@@ -116,77 +115,23 @@ namespace Booking.Autos.Business.Services
             await ValidarReferenciasActualizacionAsync(request, ct);
             await ValidarDisponibilidadActualizacionAsync(existente.IdVehiculo, request.Id, request.FechaInicio, request.FechaFin, ct);
 
-            var cantidadDias = Math.Max(1, (request.FechaFin.Date - request.FechaInicio.Date).Days);
-            var estadoDetalle = existente.Estado == "CON" ? "CON" : "PEN";
-
             var model = ReservaBusinessMapper.ToDataModel(request);
             model.IdCliente = existente.IdCliente;
             model.IdVehiculo = existente.IdVehiculo;
-            model.CantidadDias = cantidadDias;
+            model.CantidadDias = existente.CantidadDias;
             model.Codigo = existente.Codigo;
             model.Guid = existente.Guid;
             model.FechaReservaUtc = existente.FechaReservaUtc;
             model.Estado = existente.Estado;
+            model.Subtotal = existente.Subtotal;
+            model.Iva = existente.Iva;
+            model.Total = existente.Total;
             model.CreadoPorUsuario = existente.CreadoPorUsuario;
             model.ServicioOrigen = existente.ServicioOrigen;
             model.OrigenCanal = existente.OrigenCanal;
             model.EsEliminado = existente.EsEliminado;
             model.ModificadoPorUsuario = "SYSTEM";
             model.ModificacionIp = "127.0.0.1";
-
-            if (request.Conductores != null)
-            {
-                foreach (var conductor in request.Conductores)
-                {
-                    conductor.IdReserva = request.Id;
-                    await _conductorService.ActualizarAsync(conductor, ct);
-                }
-            }
-
-            if (request.Extras != null)
-            {
-                var extrasExistentes = (await _reservaExtraDataService.GetByReservaAsync(request.Id, ct)).ToList();
-
-                foreach (var extra in request.Extras)
-                {
-                    var detalleExistente = extrasExistentes.FirstOrDefault(x => x.IdExtra == extra.IdExtra);
-
-                    if (detalleExistente != null)
-                    {
-                        await _reservaExtraDataService.UpdateAsync(new ReservaExtraDataModel
-                        {
-                            Id = detalleExistente.Id,
-                            IdExtra = extra.IdExtra,
-                            Cantidad = extra.Cantidad,
-                            Estado = estadoDetalle,
-                            FechaActualizacion = DateTime.UtcNow
-                        }, ct);
-                    }
-                    else
-                    {
-                        await _reservaExtraDataService.AddAsync(new ReservaExtraDataModel
-                        {
-                            IdReserva = request.Id,
-                            IdExtra = extra.IdExtra,
-                            Cantidad = extra.Cantidad,
-                            Estado = estadoDetalle,
-                            EsEliminado = false,
-                            FechaCreacion = DateTime.UtcNow,
-                            FechaActualizacion = DateTime.UtcNow
-                        }, ct);
-                    }
-                }
-            }
-
-            var vehiculo = await _vehiculoDataService.GetByIdAsync(existente.IdVehiculo, ct)
-                ?? throw new NotFoundException("Vehículo", existente.IdVehiculo);
-
-            var subtotalExtras = await _reservaExtraDataService.GetSubtotalByReservaAsync(request.Id, ct);
-            var subtotalVehiculo = vehiculo.PrecioBaseDia * cantidadDias;
-
-            model.Subtotal = subtotalVehiculo + subtotalExtras;
-            model.Iva = model.Subtotal * 0.15m;
-            model.Total = model.Subtotal + model.Iva;
 
             await _reservaDataService.UpdateAsync(model, ct);
 
@@ -404,56 +349,6 @@ namespace Booking.Autos.Business.Services
             var locEntrega = await _localizacionDataService.GetByIdAsync(request.IdLocalizacionEntrega, ct);
             if (locEntrega == null)
                 errors.Add($"No existe la localización de entrega con id {request.IdLocalizacionEntrega}.");
-
-            if (request.Extras != null)
-            {
-                var extrasDuplicados = request.Extras
-                    .GroupBy(x => x.IdExtra)
-                    .Where(x => x.Count() > 1)
-                    .Select(x => x.Key)
-                    .ToList();
-
-                if (extrasDuplicados.Any())
-                    errors.Add($"No se permiten extras duplicados en la reserva: {string.Join(", ", extrasDuplicados)}.");
-
-                foreach (var extra in request.Extras)
-                {
-                    if (extra.Cantidad <= 0)
-                    {
-                        errors.Add($"La cantidad del extra {extra.IdExtra} debe ser mayor a 0.");
-                        continue;
-                    }
-
-                    var extraDb = await _extraDataService.GetByIdAsync(extra.IdExtra, ct);
-                    if (extraDb == null)
-                        errors.Add($"No existe el extra con id {extra.IdExtra}.");
-                }
-            }
-
-            if (request.Conductores != null)
-            {
-                var conductoresDuplicados = request.Conductores
-                    .GroupBy(x => x.IdConductor)
-                    .Where(x => x.Count() > 1)
-                    .Select(x => x.Key)
-                    .ToList();
-
-                if (conductoresDuplicados.Any())
-                    errors.Add($"No se permiten conductores duplicados en la reserva: {string.Join(", ", conductoresDuplicados)}.");
-
-                foreach (var conductor in request.Conductores)
-                {
-                    if (string.IsNullOrWhiteSpace(conductor.Rol))
-                    {
-                        errors.Add($"El rol del conductor {conductor.IdConductor} es obligatorio.");
-                        continue;
-                    }
-
-                    var conductorDb = await _conductorDataService.GetByIdAsync(conductor.IdConductor, ct);
-                    if (conductorDb == null)
-                        errors.Add($"No existe el conductor con id {conductor.IdConductor}.");
-                }
-            }
 
             if (errors.Any())
                 throw new ValidationException(errors);

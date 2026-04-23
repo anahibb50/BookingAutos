@@ -29,21 +29,6 @@ namespace Booking.Autos.Business.Mappers
         }
 
         // =========================
-        // ACTUALIZAR → DATAMODEL (MISMO ESTILO QUE CIUDAD)
-        // =========================
-        public static ReservaExtraDataModel ToDataModel(ActualizarReservaExtraDetalleRequest request)
-        {
-            return new ReservaExtraDataModel
-            {
-                Id = request.Id!.Value,
-                IdExtra = request.IdExtra,
-                Cantidad = request.Cantidad,
-
-                FechaActualizacion = DateTime.UtcNow
-            };
-        }
-
-        // =========================
         // DATAMODEL → RESPONSE
         // =========================
         public static ReservaExtraDetalleResponse ToResponse(ReservaExtraDataModel model)
