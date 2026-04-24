@@ -41,10 +41,7 @@ namespace Booking.Autos.API.Extensions
             services.AddScoped<IMarcaService, MarcaService>();
             services.AddScoped<IPaisService, PaisService>();
             services.AddScoped<IRolService, RolService>();
-            services.AddScoped<IUsuarioRolService, UsuarioRolService>();
             services.AddScoped<IConductorReservaService, ConductorReservaService>();
-            services.AddScoped<IReservaExtraService, ReservaExtraService>();
-            services.AddScoped<IUsuarioAppService, UsuarioAppService>();
             services.AddScoped<ICategoriaService, CategoriaService>();
             services.AddScoped<IClienteService, ClienteService>();
             services.AddScoped<ICiudadService, CiudadService>();

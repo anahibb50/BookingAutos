@@ -72,62 +72,6 @@ namespace Booking.Autos.Business.Services
             return ConductorReservaBusinessMapper.ToResponse(creado);
         }
 
-        public async Task<ConductorReservaDetalleResponse> ActualizarAsync(
-            ActualizarConductorReservaDetalleRequest request,
-            CancellationToken ct = default)
-        {
-            if (request.IdConductor <= 0)
-                throw new ValidationException(new List<string> { "IdConductor inválido." });
-
-            // 🔥 obtener existente
-            var existente = await _dataService
-                .GetAsync(request.IdReserva, request.IdConductor, ct);
-
-            // =========================
-            // 🔥 CREAR
-            // =========================
-            if (existente is null)
-            {
-                var nuevo = ConductorReservaBusinessMapper.ToDataModel(
-                    new CrearConductorReservaDetalleRequest
-                    {
-                        IdConductor = request.IdConductor,
-                        Rol = request.Rol,
-                        EsPrincipal = request.EsPrincipal,
-                        Observaciones = request.Observaciones
-                    });
-
-                nuevo.IdReserva = request.IdReserva;
-                nuevo.CreadoPorUsuario = "SYSTEM";
-                nuevo.ServicioOrigen = "API";
-
-                var creado = await _dataService.CreateAsync(nuevo, ct);
-
-                return ConductorReservaBusinessMapper.ToResponse(creado);
-            }
-
-            // =========================
-            // 🔥 UPDATE
-            // =========================
-            var model = ConductorReservaBusinessMapper.ToDataModel(request);
-
-            model.IdReserva = request.IdReserva;
-
-            // 🔥 conservar datos importantes
-            model.Estado = existente.Estado;
-            model.FechaRegistroUtc = existente.FechaRegistroUtc;
-            model.CreadoPorUsuario = existente.CreadoPorUsuario;
-            model.ServicioOrigen = existente.ServicioOrigen;
-
-            // 🔥 auditoría
-            model.ModificadoPorUsuario = "SYSTEM";
-            model.ModificacionIp = "127.0.0.1";
-
-            var actualizado = await _dataService.UpdateAsync(model, ct);
-
-            return ConductorReservaBusinessMapper.ToResponse(actualizado);
-        }
-
         // =========================
         // REMOVER DIRECTO
         // =========================

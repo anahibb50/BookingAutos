@@ -14,10 +14,6 @@ namespace Booking.Autos.Business.Interfaces
             CrearConductorReservaDetalleRequest request,
             CancellationToken ct = default);
 
-        Task<ConductorReservaDetalleResponse> ActualizarAsync(
-            ActualizarConductorReservaDetalleRequest request,
-            CancellationToken cancellationToken = default);
-
         Task RemoverAsync(
             int idReserva,
             int idConductor,

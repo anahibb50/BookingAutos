@@ -27,25 +27,6 @@ namespace Booking.Autos.Business.Mappers
         }
 
         // =========================
-        // ACTUALIZAR → DATAMODEL (MISMO ESTILO QUE CIUDAD)
-        // =========================
-        public static ConductorReservaDataModel ToDataModel(ActualizarConductorReservaDetalleRequest request)
-        {
-            return new ConductorReservaDataModel
-            {
-
-                IdReserva = request.IdReserva,
-                IdConductor = request.IdConductor,
-
-                Rol = request.Rol,
-                EsPrincipal = request.EsPrincipal,
-                Observaciones = request.Observaciones,
-
-                FechaModificacionUtc = DateTime.UtcNow
-            };
-        }
-
-        // =========================
         // DATAMODEL → RESPONSE
         // =========================
         public static ConductorReservaDetalleResponse ToResponse(ConductorReservaDataModel model)
