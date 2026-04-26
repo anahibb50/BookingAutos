@@ -57,6 +57,8 @@ namespace Booking.Autos.Business.Services
             ActualizarLocalizacionRequest request,
             CancellationToken ct = default)
         {
+            request.Nombre = request.Nombre?.Trim();
+
             var errors = LocalizacionValidator.ValidarActualizacion(request);
 
             if (errors.Any())
@@ -67,8 +69,9 @@ namespace Booking.Autos.Business.Services
             if (existente is null)
                 throw new NotFoundException("Localizacion", request.Id);
 
-            // 🔥 validar duplicado (si cambió nombre)
-            if (existente.Nombre != request.Nombre)
+            // 🔥 validar duplicado (si cambió nombre o ciudad)
+            if (!string.Equals(existente.Nombre, request.Nombre, StringComparison.OrdinalIgnoreCase) ||
+                existente.IdCiudad != request.IdCiudad)
             {
                 var existe = await _dataService
                     .ExistsByNombreEnCiudadAsync(request.Nombre, request.IdCiudad, ct);
@@ -89,6 +92,7 @@ namespace Booking.Autos.Business.Services
             model.CreadoPorUsuario = existente.CreadoPorUsuario;
             model.OrigenRegistro = existente.OrigenRegistro;
             model.EsEliminado = existente.EsEliminado;
+            model.Estado = existente.Estado;
 
             // 🔥 auditoría
             model.ModificadoPorUsuario = "SYSTEM";

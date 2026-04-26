@@ -52,8 +52,6 @@ namespace Booking.Autos.Business.Mappers
                 HorarioAtencion = request.HorarioAtencion,
                 ZonaHoraria = request.ZonaHoraria,
 
-                Estado = request.Estado,
-
                 // 🔥 auditoría
                 FechaModificacionUtc = DateTime.UtcNow
             };

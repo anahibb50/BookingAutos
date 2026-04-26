@@ -48,7 +48,7 @@ namespace Booking.Autos.DataAccess.Configurations
 
             builder.Property(e => e.cli_ruc_ced)
                 .IsRequired()
-                .HasMaxLength(13)
+                .HasMaxLength(20)
                 .IsUnicode(false);
 
             builder.HasIndex(e => e.cli_ruc_ced)

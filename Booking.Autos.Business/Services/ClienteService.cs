@@ -29,6 +29,11 @@ namespace Booking.Autos.Business.Services
             CrearClienteRequest request,
             CancellationToken cancellationToken = default)
         {
+            request.TipoIdentificacion = NormalizarTipoIdentificacion(request.TipoIdentificacion);
+            request.Identificacion = request.Identificacion?.Trim();
+            request.Genero = request.Genero?.Trim().ToUpperInvariant();
+            request.Telefono = request.Telefono?.Trim();
+
             var errors = ClienteValidator.ValidarCreacion(request);
 
             if (errors.Any())
@@ -62,6 +67,11 @@ namespace Booking.Autos.Business.Services
             ActualizarClienteRequest request,
             CancellationToken cancellationToken = default)
         {
+            request.TipoIdentificacion = NormalizarTipoIdentificacion(request.TipoIdentificacion);
+            request.Identificacion = request.Identificacion?.Trim();
+            request.Genero = request.Genero?.Trim().ToUpperInvariant();
+            request.Telefono = request.Telefono?.Trim();
+
             var errors = ClienteValidator.ValidarActualizacion(request);
 
             if (errors.Any())
@@ -92,6 +102,7 @@ namespace Booking.Autos.Business.Services
             model.CreadoPorUsuario = existente.CreadoPorUsuario;
             model.ServicioOrigen = existente.ServicioOrigen;
             model.EsEliminado = existente.EsEliminado;
+            model.Estado = existente.Estado;
             model.ModificadoPorUsuario = "SYSTEM";
             model.ModificacionIp = "127.0.0.1";
 
@@ -210,6 +221,22 @@ namespace Booking.Autos.Business.Services
         {
             return await _clienteDataService
                 .ExistsByIdentificacionAsync(identificacion, cancellationToken);
+        }
+
+        private static string NormalizarTipoIdentificacion(string? tipoIdentificacion)
+        {
+            if (string.IsNullOrWhiteSpace(tipoIdentificacion))
+                return tipoIdentificacion ?? string.Empty;
+
+            return tipoIdentificacion.Trim().ToUpperInvariant() switch
+            {
+                "CED" => "CEDULA",
+                "CEDULA" => "CEDULA",
+                "RUC" => "RUC",
+                "PAS" => "PASAPORTE",
+                "PASAPORTE" => "PASAPORTE",
+                _ => tipoIdentificacion.Trim().ToUpperInvariant()
+            };
         }
     }
 }

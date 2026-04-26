@@ -62,8 +62,6 @@ namespace Booking.Autos.Business.Mappers
                 Telefono = request.Telefono,
                 Email = request.Email,
 
-                Estado = request.Estado,
-
                 // 🔥 AUDITORÍA
                 FechaModificacionUtc = DateTime.UtcNow
             };
@@ -81,11 +79,14 @@ namespace Booking.Autos.Business.Mappers
 
                 Nombre = model.Nombre,
                 Apellido = model.Apellido,
+                RazonSocial = model.RazonSocial,
 
                 TipoIdentificacion = model.TipoIdentificacion,
                 Identificacion = model.Identificacion,
 
                 IdCiudad = model.IdCiudad,
+                Direccion = model.Direccion,
+                Genero = model.Genero,
 
                 Telefono = model.Telefono,
                 Email = model.Email,

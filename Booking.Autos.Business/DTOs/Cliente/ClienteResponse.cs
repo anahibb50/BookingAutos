@@ -8,12 +8,15 @@
         // 👤 Info
         public string Nombre{ get; set; }
         public string Apellido { get; set; }
+        public string? RazonSocial { get; set; }
 
         public string TipoIdentificacion { get; set; }
         public string Identificacion { get; set; }
 
         // 📍 Ubicación
         public int IdCiudad { get; set; }
+        public string? Direccion { get; set; }
+        public string? Genero { get; set; }
 
         // 📞 Contacto
         public string? Telefono { get; set; }

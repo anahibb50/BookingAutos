@@ -14,8 +14,5 @@
 
         public string HorarioAtencion { get; set; }
         public string ZonaHoraria { get; set; }
-
-        // 🟢 Estado
-        public string Estado { get; set; }
     }
 }

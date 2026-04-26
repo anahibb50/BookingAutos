@@ -32,6 +32,9 @@ namespace Booking.Autos.Business.Validators
                 request.TipoIdentificacion != "PASAPORTE")
                 errors.Add("El tipo de identificación es inválido.");
 
+            if (string.IsNullOrWhiteSpace(request.Identificacion))
+                errors.Add("La identificación es obligatoria.");
+
             if (!string.IsNullOrWhiteSpace(request.Identificacion) &&
                 !string.IsNullOrWhiteSpace(request.TipoIdentificacion))
             {
@@ -67,13 +70,9 @@ namespace Booking.Autos.Business.Validators
             // =========================
             // GÉNERO
             // =========================
-            if (string.IsNullOrWhiteSpace(request.Genero))
-                errors.Add("El género es obligatorio.");
-
             if (!string.IsNullOrWhiteSpace(request.Genero) &&
                 request.Genero != "M" &&
-                request.Genero != "F" &&
-                request.Genero != "O")
+                request.Genero != "F")
                 errors.Add("El género es inválido.");
 
             // =========================
@@ -90,7 +89,10 @@ namespace Booking.Autos.Business.Validators
                 request.Telefono.Any(c => !char.IsDigit(c)))
                 errors.Add("El teléfono solo debe contener números.");
 
-           
+            if (!string.IsNullOrWhiteSpace(request.Telefono) &&
+                (request.Telefono.Length < 7 || request.Telefono.Length > 10))
+                errors.Add("El teléfono debe tener entre 7 y 10 dígitos.");
+
 
             return errors;
         }
@@ -141,13 +143,9 @@ namespace Booking.Autos.Business.Validators
             // =========================
             // GÉNERO
             // =========================
-            if (string.IsNullOrWhiteSpace(request.Genero))
-                errors.Add("El género es obligatorio.");
-
             if (!string.IsNullOrWhiteSpace(request.Genero) &&
                 request.Genero != "M" &&
-                request.Genero != "F" &&
-                request.Genero != "O")
+                request.Genero != "F")
                 errors.Add("El género es inválido.");
 
             // =========================
@@ -164,16 +162,9 @@ namespace Booking.Autos.Business.Validators
                 request.Telefono.Any(c => !char.IsDigit(c)))
                 errors.Add("El teléfono solo debe contener números.");
 
-            // =========================
-            // ESTADO
-            // =========================
-            if (string.IsNullOrWhiteSpace(request.Estado))
-                errors.Add("El estado es obligatorio.");
-
-            if (!string.IsNullOrWhiteSpace(request.Estado) &&
-                request.Estado != "ACT" &&
-                request.Estado != "INA")
-                errors.Add("El estado es inválido.");
+            if (!string.IsNullOrWhiteSpace(request.Telefono) &&
+                (request.Telefono.Length < 7 || request.Telefono.Length > 10))
+                errors.Add("El teléfono debe tener entre 7 y 10 dígitos.");
 
             return errors;
         }

@@ -135,17 +135,6 @@ namespace Booking.Autos.Business.Validators
             if (string.IsNullOrWhiteSpace(request.ZonaHoraria))
                 errors.Add("La zona horaria es obligatoria.");
 
-            // =========================
-            // ESTADO
-            // =========================
-            if (string.IsNullOrWhiteSpace(request.Estado))
-                errors.Add("El estado es obligatorio.");
-
-            if (!string.IsNullOrWhiteSpace(request.Estado) &&
-                request.Estado != "ACT" &&
-                request.Estado != "INA")
-                errors.Add("Estado inválido.");
-
             return errors;
         }
 
