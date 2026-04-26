@@ -122,7 +122,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 💰 ACTUALIZAR PRECIO (🔥 ESPECIAL)
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [Authorize(Roles = "ADMIN")]
         [HttpPatch("{id}/precio")]
         public async Task<IActionResult> ActualizarPrecio(
             int id,

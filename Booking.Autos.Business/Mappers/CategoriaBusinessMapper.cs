@@ -32,8 +32,7 @@ namespace Booking.Autos.Business.Mappers
             {
                 Id = model.Id,
                 Guid = model.Guid,
-                Nombre = model.Nombre,
-                Descripcion = model.Descripcion
+                Nombre = model.Nombre
             };
         }
 

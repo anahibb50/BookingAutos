@@ -62,6 +62,11 @@ namespace Booking.Autos.API.Middleware
                     response = new ApiErrorResponse(businessEx.Message);
                     break;
 
+                case DbUpdateException dbUpdateEx when IsLocalizacionNombreCiudadConstraintViolation(dbUpdateEx):
+                    statusCode = HttpStatusCode.Conflict;
+                    response = new ApiErrorResponse("Ya existe una localización con ese nombre en la ciudad seleccionada.");
+                    break;
+
                 case DbUpdateException dbUpdateEx when IsUniqueConstraintViolation(dbUpdateEx):
                     statusCode = HttpStatusCode.Conflict;
                     response = new ApiErrorResponse("Ya existe un registro con un valor único duplicado.");
@@ -86,6 +91,13 @@ namespace Booking.Autos.API.Middleware
         {
             return exception.InnerException is SqlException sqlException
                 && (sqlException.Number == 2601 || sqlException.Number == 2627);
+        }
+
+        private static bool IsLocalizacionNombreCiudadConstraintViolation(DbUpdateException exception)
+        {
+            var errorText = exception.InnerException?.Message ?? exception.Message;
+
+            return errorText.Contains("UQ_Localizacion_Nombre_Ciudad", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

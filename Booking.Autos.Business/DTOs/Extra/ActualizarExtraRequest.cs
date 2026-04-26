@@ -8,7 +8,5 @@
         public string Descripcion { get; set; }
 
         public decimal ValorFijo { get; set; }
-
-        public string Estado { get; set; }
     }
 }

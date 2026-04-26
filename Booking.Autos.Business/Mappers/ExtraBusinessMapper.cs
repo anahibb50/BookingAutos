@@ -40,8 +40,6 @@ namespace Booking.Autos.Business.Mappers
                 Descripcion = request.Descripcion,
                 ValorFijo = request.ValorFijo,
 
-                Estado = request.Estado,
-
                 // 🔥 auditoría
                 FechaModificacionUtc = DateTime.UtcNow
             };

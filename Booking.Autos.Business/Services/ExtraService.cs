@@ -65,6 +65,7 @@ namespace Booking.Autos.Business.Services
             model.CreadoPorUsuario = existente.CreadoPorUsuario;
             model.OrigenRegistro = existente.OrigenRegistro;
             model.EsEliminado = existente.EsEliminado;
+            model.Estado = existente.Estado;
 
             // 🔥 auditoría
             model.ModificadoPorUsuario = "SYSTEM";

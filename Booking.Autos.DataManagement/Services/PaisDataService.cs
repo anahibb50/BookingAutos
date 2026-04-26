@@ -27,10 +27,11 @@ namespace Booking.Autos.DataManagement.Services
 
         public async Task<PaisDataModel?> GetByNombreAsync(string nombre, CancellationToken ct = default)
         {
+            var nombreNormalizado = nombre.Trim();
             var entities = await _unitOfWork.Paises.GetAllAsync(ct);
 
             var entity = entities.FirstOrDefault(x =>
-                x.nombre_pais == nombre &&
+                string.Equals(x.nombre_pais?.Trim(), nombreNormalizado, StringComparison.OrdinalIgnoreCase) &&
                 !x.es_eliminado);
 
             return entity == null ? null : PaisDataMapper.ToDataModel(entity);
@@ -38,10 +39,11 @@ namespace Booking.Autos.DataManagement.Services
 
         public async Task<PaisDataModel?> GetByCodigoIsoAsync(string codigoIso, CancellationToken ct = default)
         {
+            var codigoIsoNormalizado = codigoIso.Trim();
             var entities = await _unitOfWork.Paises.GetAllAsync(ct);
 
             var entity = entities.FirstOrDefault(x =>
-                x.codigo_iso == codigoIso &&
+                string.Equals(x.codigo_iso?.Trim(), codigoIsoNormalizado, StringComparison.OrdinalIgnoreCase) &&
                 !x.es_eliminado);
 
             return entity == null ? null : PaisDataMapper.ToDataModel(entity);
@@ -104,14 +106,20 @@ namespace Booking.Autos.DataManagement.Services
 
         public async Task<bool> ExistsByNombreAsync(string nombre, CancellationToken ct = default)
         {
+            var nombreNormalizado = nombre.Trim();
             var entities = await _unitOfWork.Paises.GetAllAsync(ct);
-            return entities.Any(x => x.nombre_pais == nombre && !x.es_eliminado);
+            return entities.Any(x =>
+                !x.es_eliminado &&
+                string.Equals(x.nombre_pais?.Trim(), nombreNormalizado, StringComparison.OrdinalIgnoreCase));
         }
 
         public async Task<bool> ExistsByCodigoIsoAsync(string codigoIso, CancellationToken ct = default)
         {
+            var codigoIsoNormalizado = codigoIso.Trim();
             var entities = await _unitOfWork.Paises.GetAllAsync(ct);
-            return entities.Any(x => x.codigo_iso == codigoIso && !x.es_eliminado);
+            return entities.Any(x =>
+                !x.es_eliminado &&
+                string.Equals(x.codigo_iso?.Trim(), codigoIsoNormalizado, StringComparison.OrdinalIgnoreCase));
         }
 
         public async Task<bool> TieneCiudadesAsociadasAsync(int idPais, CancellationToken ct = default)

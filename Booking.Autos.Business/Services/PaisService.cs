@@ -23,26 +23,32 @@ namespace Booking.Autos.Business.Services
             CrearPaisRequest request,
             CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(request.Nombre))
+            var nombre = request.Nombre?.Trim();
+            var codigoIso = request.CodigoIso?.Trim();
+
+            if (string.IsNullOrWhiteSpace(nombre))
                 throw new ValidationException(new List<string>
                 {
                     "El nombre es obligatorio."
                 });
 
-            if (await _dataService.ExistsByNombreAsync(request.Nombre, ct))
+            if (await _dataService.ExistsByNombreAsync(nombre, ct))
                 throw new ValidationException(new List<string>
                 {
                     "Ya existe un país con ese nombre."
                 });
 
-            if (!string.IsNullOrWhiteSpace(request.CodigoIso))
+            if (!string.IsNullOrWhiteSpace(codigoIso))
             {
-                if (await _dataService.ExistsByCodigoIsoAsync(request.CodigoIso, ct))
+                if (await _dataService.ExistsByCodigoIsoAsync(codigoIso, ct))
                     throw new ValidationException(new List<string>
                     {
                         "El código ISO ya está registrado."
                     });
             }
+
+            request.Nombre = nombre;
+            request.CodigoIso = codigoIso;
 
             var model = PaisBusinessMapper.ToDataModel(request);
 
@@ -58,6 +64,9 @@ namespace Booking.Autos.Business.Services
             ActualizarPaisRequest request,
             CancellationToken ct = default)
         {
+            var nombre = request.Nombre?.Trim();
+            var codigoIso = request.CodigoIso?.Trim();
+
             if (request.Id <= 0)
                 throw new ValidationException(new List<string>
                 {
@@ -70,9 +79,15 @@ namespace Booking.Autos.Business.Services
                 throw new NotFoundException("Pais", request.Id);
 
             // 🔥 validar nombre
-            if (!string.Equals(existente.Nombre, request.Nombre, StringComparison.OrdinalIgnoreCase))
+            if (string.IsNullOrWhiteSpace(nombre))
+                throw new ValidationException(new List<string>
+                {
+                    "El nombre es obligatorio."
+                });
+
+            if (!string.Equals(existente.Nombre?.Trim(), nombre, StringComparison.OrdinalIgnoreCase))
             {
-                if (await _dataService.ExistsByNombreAsync(request.Nombre, ct))
+                if (await _dataService.ExistsByNombreAsync(nombre, ct))
                     throw new ValidationException(new List<string>
                     {
                         "Ya existe un país con ese nombre."
@@ -80,15 +95,18 @@ namespace Booking.Autos.Business.Services
             }
 
             // 🔥 validar ISO
-            if (!string.IsNullOrWhiteSpace(request.CodigoIso) &&
-                !string.Equals(existente.CodigoIso, request.CodigoIso, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(codigoIso) &&
+                !string.Equals(existente.CodigoIso?.Trim(), codigoIso, StringComparison.OrdinalIgnoreCase))
             {
-                if (await _dataService.ExistsByCodigoIsoAsync(request.CodigoIso, ct))
+                if (await _dataService.ExistsByCodigoIsoAsync(codigoIso, ct))
                     throw new ValidationException(new List<string>
                     {
                         "El código ISO ya está registrado."
                     });
             }
+
+            request.Nombre = nombre;
+            request.CodigoIso = codigoIso;
 
             var model = PaisBusinessMapper.ToDataModel(request);
 

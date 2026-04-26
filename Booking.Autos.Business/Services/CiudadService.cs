@@ -27,8 +27,7 @@ namespace Booking.Autos.Business.Services
             if (string.IsNullOrWhiteSpace(request.Nombre))
                 throw new ValidationException(new List<string> { "El nombre es obligatorio." });
 
-            if (string.IsNullOrWhiteSpace(request.CodigoPostal))
-                throw new ValidationException(new List<string> { "El código postal es obligatorio." });
+            ValidarCodigoPostal(request.CodigoPostal);
 
             var pais = await _paisDataService.GetByIdAsync(request.IdPais, cancellationToken);
             if (pais is null)
@@ -57,8 +56,7 @@ namespace Booking.Autos.Business.Services
             if (string.IsNullOrWhiteSpace(request.Nombre))
                 throw new ValidationException(new List<string> { "El nombre es obligatorio." });
 
-            if (string.IsNullOrWhiteSpace(request.CodigoPostal))
-                throw new ValidationException(new List<string> { "El código postal es obligatorio." });
+            ValidarCodigoPostal(request.CodigoPostal);
 
             var existente = await _ciudadDataService.GetByIdAsync(request.Id, cancellationToken);
 
@@ -143,6 +141,15 @@ namespace Booking.Autos.Business.Services
             CancellationToken cancellationToken = default)
         {
             return await _ciudadDataService.ExistsByNombreAsync(nombre, idPais, cancellationToken);
+        }
+
+        private static void ValidarCodigoPostal(string? codigoPostal)
+        {
+            if (string.IsNullOrWhiteSpace(codigoPostal))
+                throw new ValidationException(new List<string> { "El código postal es obligatorio." });
+
+            if (!codigoPostal.All(char.IsDigit))
+                throw new ValidationException(new List<string> { "El código postal solo debe contener números." });
         }
     }
 }

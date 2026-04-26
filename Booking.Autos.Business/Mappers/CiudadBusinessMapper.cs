@@ -41,7 +41,8 @@ namespace Booking.Autos.Business.Mappers
                 Guid = model.Guid,
                 Nombre = model.Nombre,
                 CodigoPostal = model.CodigoPostal,
-                IdPais = model.IdPais
+                IdPais = model.IdPais,
+                Estado = model.Estado
             };
         }
 
