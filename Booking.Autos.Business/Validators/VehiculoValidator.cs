@@ -68,14 +68,20 @@ namespace Booking.Autos.Business.Validators
             if (string.IsNullOrWhiteSpace(request.Modelo))
                 errors.Add("El modelo es obligatorio.");
 
+            if (request.IdMarca <= 0)
+                errors.Add("La marca es obligatoria.");
+
+            if (request.IdCategoria <= 0)
+                errors.Add("La categoría es obligatoria.");
+
+            if (request.AnioFabricacion < 1980 || request.AnioFabricacion > DateTime.UtcNow.Year + 1)
+                errors.Add("El año de fabricación es inválido.");
+
             if (request.PrecioBaseDia <= 0)
                 errors.Add("El precio base debe ser mayor a 0.");
 
             if (request.IdLocalizacion <= 0)
                 errors.Add("La localización es obligatoria.");
-
-            if (string.IsNullOrWhiteSpace(request.Estado))
-                errors.Add("El estado es obligatorio.");
 
             return errors;
         }

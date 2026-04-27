@@ -95,7 +95,7 @@ namespace Booking.Autos.DataManagement.Services
             return !reservas.Any(r =>
                 r.id_vehiculo == idVehiculo &&
                 !r.es_eliminado &&
-                r.estado_reserva != "CAN" &&
+                (r.estado_reserva == "PEN" || r.estado_reserva == "CON") &&
                 (fechaInicio < r.fecha_fin && fechaFin > r.fecha_inicio));
         }
 
@@ -126,6 +126,7 @@ namespace Booking.Autos.DataManagement.Services
             existing.hora_fin = model.HoraFin;
             existing.id_localizacion_recogida = model.IdLocalizacionRecogida;
             existing.id_localizacion_entrega = model.IdLocalizacionEntrega;
+            existing.cantidad_dias = model.CantidadDias;
             existing.descripcion_reserva = model.Descripcion;
             existing.fecha_modificacion_utc = DateTime.UtcNow;
             existing.modificado_por_usuario = model.ModificadoPorUsuario;

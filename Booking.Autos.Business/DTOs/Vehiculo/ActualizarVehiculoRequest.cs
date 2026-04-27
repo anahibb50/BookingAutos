@@ -31,9 +31,6 @@
         // 📍 localización puede cambiar
         public int IdLocalizacion { get; set; }
 
-        // 🟢 Estado
-        public string Estado { get; set; }
-
         // 📝
         public string? Observaciones { get; set; }
         public string? ImagenUrl { get; set; }

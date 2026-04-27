@@ -52,6 +52,14 @@ namespace Booking.Autos.Business.Services
             if (errors.Any())
                 throw new ValidationException(errors.ToList());
 
+            var marcaExiste = await _vehiculoDataService.ExisteMarcaAsync(request.IdMarca, ct);
+            var categoriaExiste = await _vehiculoDataService.ExisteCategoriaAsync(request.IdCategoria, ct);
+            var localizacionExiste = await _vehiculoDataService.ExisteLocalizacionAsync(request.IdLocalizacion, ct);
+
+            var fkErrors = VehiculoValidator.ValidarRelaciones(marcaExiste, categoriaExiste, localizacionExiste);
+            if (fkErrors.Any())
+                throw new ValidationException(fkErrors.ToList());
+
             var existente = await _vehiculoDataService.GetByIdAsync(request.Id, ct);
 
             if (existente is null)
@@ -67,6 +75,7 @@ namespace Booking.Autos.Business.Services
             dataModel.CodigoInterno = existente.CodigoInterno;
             dataModel.FechaRegistroUtc = existente.FechaRegistroUtc;
             dataModel.EsEliminado = existente.EsEliminado;
+            dataModel.Estado = existente.Estado;
 
             var actualizado = await _vehiculoDataService.UpdateAsync(dataModel, ct);
             return VehiculoBusinessMapper.ToResponse(actualizado);

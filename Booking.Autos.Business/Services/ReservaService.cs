@@ -6,6 +6,7 @@ using Booking.Autos.Business.Mappers;
 using Booking.Autos.Business.Validators;
 using Booking.Autos.DataManagement.Common;
 using Booking.Autos.DataManagement.Interfaces;
+using Booking.Autos.DataManagement.Models.Facturas;
 using Booking.Autos.DataManagement.Models.Reservas;
 
 namespace Booking.Autos.Business.Services
@@ -20,6 +21,7 @@ namespace Booking.Autos.Business.Services
         private readonly IClienteDataService _clienteDataService;
         private readonly ILocalizacionDataService _localizacionDataService;
         private readonly IConductorDataService _conductorDataService;
+        private readonly IFacturaDataService _facturaDataService;
 
         public ReservaService(
             IReservaDataService reservaDataService,
@@ -29,7 +31,8 @@ namespace Booking.Autos.Business.Services
             IVehiculoDataService vehiculoDataService,
             IClienteDataService clienteDataService,
             ILocalizacionDataService localizacionDataService,
-            IConductorDataService conductorDataService)
+            IConductorDataService conductorDataService,
+            IFacturaDataService facturaDataService)
         {
             _reservaDataService = reservaDataService;
             _reservaExtraDataService = reservaExtraDataService;
@@ -39,6 +42,7 @@ namespace Booking.Autos.Business.Services
             _clienteDataService = clienteDataService;
             _localizacionDataService = localizacionDataService;
             _conductorDataService = conductorDataService;
+            _facturaDataService = facturaDataService;
         }
 
         public async Task<ReservaResponse> CrearAsync(CrearReservaRequest request, CancellationToken ct = default)
@@ -46,6 +50,15 @@ namespace Booking.Autos.Business.Services
             var errors = ReservaValidator.ValidarCreacion(request);
             if (errors.Any())
                 throw new ValidationException(errors.ToList());
+
+            var cantidadDiasCalculada = (request.FechaFin.Date - request.FechaInicio.Date).Days;
+
+            var vehiculo = await _vehiculoDataService.GetByIdAsync(request.IdVehiculo, ct);
+            if (vehiculo == null)
+                throw new ValidationException(new List<string> { $"No existe el vehículo con id {request.IdVehiculo}." });
+
+            // La recogida siempre arranca desde la localización actual del vehículo.
+            request.IdLocalizacionRecogida = vehiculo.IdLocalizacion;
 
             await ValidarReferenciasAsync(request, ct);
 
@@ -56,12 +69,13 @@ namespace Booking.Autos.Business.Services
                 throw new ValidationException(new List<string> { "El vehículo no está disponible para el rango de fechas solicitado." });
 
             var model = ReservaBusinessMapper.ToDataModel(request);
+            model.CantidadDias = cantidadDiasCalculada;
             model.CreadoPorUsuario = "SYSTEM";
             model.ServicioOrigen = "API";
 
             var (subtotal, iva, total) = await CalcularTotalesAsync(
                 request.IdVehiculo,
-                request.CantidadDias,
+                cantidadDiasCalculada,
                 request.Extras,
                 ct);
 
@@ -112,20 +126,32 @@ namespace Booking.Autos.Business.Services
             if (existente.Estado == "CON" || existente.Estado == "CAN")
                 throw new ValidationException(new List<string> { "No se puede actualizar una reserva confirmada o cancelada." });
 
+            var cantidadDiasCalculada = (request.FechaFin.Date - request.FechaInicio.Date).Days;
+
+            var vehiculo = await _vehiculoDataService.GetByIdAsync(request.IdVehiculo, ct);
+            if (vehiculo == null)
+                throw new ValidationException(new List<string> { $"No existe el vehículo con id {request.IdVehiculo}." });
+
+            // En actualización también se forza la localización de recogida desde el vehículo.
+            request.IdLocalizacionRecogida = vehiculo.IdLocalizacion;
+
             await ValidarReferenciasActualizacionAsync(request, ct);
-            await ValidarDisponibilidadActualizacionAsync(existente.IdVehiculo, request.Id, request.FechaInicio, request.FechaFin, ct);
+            await ValidarDisponibilidadActualizacionAsync(request.IdVehiculo, request.Id, request.FechaInicio, request.FechaFin, ct);
 
             var model = ReservaBusinessMapper.ToDataModel(request);
-            model.IdCliente = existente.IdCliente;
-            model.IdVehiculo = existente.IdVehiculo;
-            model.CantidadDias = existente.CantidadDias;
+            model.CantidadDias = cantidadDiasCalculada;
             model.Codigo = existente.Codigo;
             model.Guid = existente.Guid;
             model.FechaReservaUtc = existente.FechaReservaUtc;
             model.Estado = existente.Estado;
-            model.Subtotal = existente.Subtotal;
-            model.Iva = existente.Iva;
-            model.Total = existente.Total;
+            var (subtotal, iva, total) = await CalcularTotalesActualizacionAsync(
+                request.IdVehiculo,
+                cantidadDiasCalculada,
+                request.Id,
+                ct);
+            model.Subtotal = subtotal;
+            model.Iva = iva;
+            model.Total = total;
             model.CreadoPorUsuario = existente.CreadoPorUsuario;
             model.ServicioOrigen = existente.ServicioOrigen;
             model.OrigenCanal = existente.OrigenCanal;
@@ -217,7 +243,37 @@ namespace Booking.Autos.Business.Services
             if (errors.Any())
                 throw new ValidationException(errors.ToList());
 
-            return await _reservaDataService.ConfirmarAsync(id, ct);
+            var confirmada = await _reservaDataService.ConfirmarAsync(id, ct);
+            if (!confirmada)
+                return false;
+
+            var facturaExistente = await _facturaDataService.GetByReservaAsync(id, ct);
+
+            if (facturaExistente == null)
+            {
+                var facturaCreada = await _facturaDataService.CreateAsync(new FacturaDataModel
+                {
+                    IdReserva = reserva.Id,
+                    IdCliente = reserva.IdCliente,
+                    Descripcion = $"Factura automática de la reserva {reserva.Codigo}",
+                    Origen = "RESERVA_CONFIRMADA",
+                    Subtotal = reserva.Subtotal,
+                    Iva = reserva.Iva,
+                    Total = reserva.Total,
+                    Estado = "ABI",
+                    FechaCreacion = DateTime.UtcNow,
+                    FechaActualizacion = DateTime.UtcNow,
+                    EsEliminado = false
+                }, ct);
+
+                await _facturaDataService.AprobarAsync(facturaCreada.Id, ct);
+            }
+            else if (facturaExistente.Estado != "APR")
+            {
+                await _facturaDataService.AprobarAsync(facturaExistente.Id, ct);
+            }
+
+            return true;
         }
 
         public async Task<bool> CancelarAsync(int id, string motivo, CancellationToken ct = default)
@@ -342,6 +398,14 @@ namespace Booking.Autos.Business.Services
         {
             var errors = new List<string>();
 
+            var cliente = await _clienteDataService.GetByIdAsync(request.IdCliente, ct);
+            if (cliente == null)
+                errors.Add($"No existe el cliente con id {request.IdCliente}.");
+
+            var vehiculo = await _vehiculoDataService.GetByIdAsync(request.IdVehiculo, ct);
+            if (vehiculo == null)
+                errors.Add($"No existe el vehículo con id {request.IdVehiculo}.");
+
             var locRecogida = await _localizacionDataService.GetByIdAsync(request.IdLocalizacionRecogida, ct);
             if (locRecogida == null)
                 errors.Add($"No existe la localización de recogida con id {request.IdLocalizacionRecogida}.");
@@ -365,12 +429,31 @@ namespace Booking.Autos.Business.Services
 
             var conflicto = reservasVehiculo.Any(r =>
                 r.Id != idReservaActual &&
-                r.Estado != "CAN" &&
+                (r.Estado == "PEN" || r.Estado == "CON") &&
                 fechaInicio < r.FechaFin &&
                 fechaFin > r.FechaInicio);
 
             if (conflicto)
                 throw new ValidationException(new List<string> { "El vehículo no está disponible para el nuevo rango de fechas solicitado." });
+        }
+
+        private async Task<(decimal subtotal, decimal iva, decimal total)> CalcularTotalesActualizacionAsync(
+            int idVehiculo,
+            int cantidadDias,
+            int idReserva,
+            CancellationToken ct)
+        {
+            var vehiculo = await _vehiculoDataService.GetByIdAsync(idVehiculo, ct);
+            if (vehiculo == null)
+                throw new NotFoundException("Vehículo", idVehiculo);
+
+            var subtotalVehiculo = vehiculo.PrecioBaseDia * cantidadDias;
+            var subtotalExtras = await _reservaExtraDataService.GetSubtotalByReservaAsync(idReserva, ct);
+            var subtotal = subtotalVehiculo + subtotalExtras;
+            var iva = subtotal * 0.15m;
+            var total = subtotal + iva;
+
+            return (subtotal, iva, total);
         }
     }
 }

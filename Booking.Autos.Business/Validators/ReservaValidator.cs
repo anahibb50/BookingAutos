@@ -39,10 +39,19 @@ namespace Booking.Autos.Business.Validators
                 errors.Add("La fecha de fin es obligatoria.");
 
             if (request.FechaInicio >= request.FechaFin)
-                errors.Add("La fecha de inicio debe ser menor a la fecha de fin.");
+                errors.Add("Fechas inválidas: la fecha de fin debe ser posterior a la fecha de inicio.");
 
             if (request.FechaInicio < DateTime.UtcNow.Date)
                 errors.Add("No se puede reservar en fechas pasadas.");
+
+            if (request.FechaInicio != default &&
+                request.FechaFin != default &&
+                request.FechaFin > request.FechaInicio)
+            {
+                var diasCalculados = (request.FechaFin.Date - request.FechaInicio.Date).Days;
+                if (diasCalculados != request.CantidadDias)
+                    errors.Add("La cantidad de días no coincide con el rango entre la fecha de inicio y la fecha de fin.");
+            }
 
             // =========================
             // DESCRIPCIÓN
@@ -67,15 +76,35 @@ namespace Booking.Autos.Business.Validators
             if (request.Id <= 0)
                 errors.Add("El id de la reserva es inválido.");
 
+            if (request.IdCliente <= 0)
+                errors.Add("El cliente es obligatorio.");
+
+            if (request.IdVehiculo <= 0)
+                errors.Add("El vehículo es obligatorio.");
+
+            if (request.CantidadDias <= 0)
+                errors.Add("La cantidad de días debe ser mayor a 0.");
+
+            if (request.IdLocalizacionEntrega <= 0)
+                errors.Add("La localización de entrega es obligatoria.");
 
             // =========================
             // FECHAS
             // =========================
             if (request.FechaInicio >= request.FechaFin)
-                errors.Add("La fecha de inicio debe ser menor a la fecha de fin.");
+                errors.Add("Fechas inválidas: la fecha de fin debe ser posterior a la fecha de inicio.");
 
             if (request.FechaInicio < DateTime.UtcNow.Date)
                 errors.Add("No se puede modificar a fechas pasadas.");
+
+            if (request.FechaInicio != default &&
+                request.FechaFin != default &&
+                request.FechaFin > request.FechaInicio)
+            {
+                var diasCalculados = (request.FechaFin.Date - request.FechaInicio.Date).Days;
+                if (diasCalculados != request.CantidadDias)
+                    errors.Add("La cantidad de días no coincide con el rango entre la fecha de inicio y la fecha de fin.");
+            }
 
             return errors;
         }

@@ -44,7 +44,8 @@ namespace Booking.Autos.Business.Mappers
             {
                 Id = request.Id,
 
-           
+                IdCliente = request.IdCliente,
+                IdVehiculo = request.IdVehiculo,
 
                 IdLocalizacionRecogida = request.IdLocalizacionRecogida,
                 IdLocalizacionEntrega = request.IdLocalizacionEntrega,
@@ -54,6 +55,8 @@ namespace Booking.Autos.Business.Mappers
 
                 HoraInicio = request.HoraInicio,
                 HoraFin = request.HoraFin,
+
+                CantidadDias = request.CantidadDias,
 
                 Descripcion = request.Descripcion,
 

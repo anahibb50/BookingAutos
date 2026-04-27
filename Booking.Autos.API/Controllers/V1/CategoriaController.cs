@@ -10,7 +10,6 @@ namespace Booking.Autos.API.Controllers.V1.Catalogos
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v1/categorias")]
-    [Authorize] // 🔥 protegido (requiere JWT)
     public class CategoriaController : ControllerBase
     {
         private readonly ICategoriaService _categoriaService;
@@ -71,7 +70,7 @@ namespace Booking.Autos.API.Controllers.V1.Catalogos
         // ============================================================
         // 🔍 OBTENER POR ID
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet("{id}")]
         public async Task<IActionResult> ObtenerPorId(
             int id,
@@ -85,7 +84,7 @@ namespace Booking.Autos.API.Controllers.V1.Catalogos
         // ============================================================
         // 📄 LISTAR
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> Listar(CancellationToken ct)
         {

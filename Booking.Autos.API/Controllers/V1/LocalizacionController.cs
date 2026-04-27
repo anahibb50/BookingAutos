@@ -48,7 +48,7 @@ namespace Booking.Autos.API.Controllers.V1
             return Ok(ApiResponse<string>.Ok("OK", "Localización inhabilitada"));
         }
 
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet("{id}")]
         public async Task<IActionResult> ObtenerPorId(int id, CancellationToken ct)
         {
@@ -56,7 +56,7 @@ namespace Booking.Autos.API.Controllers.V1
             return Ok(ApiResponse<LocalizacionResponse>.Ok(result));
         }
 
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> Listar(CancellationToken ct)
         {
@@ -64,7 +64,7 @@ namespace Booking.Autos.API.Controllers.V1
             return Ok(ApiResponse<IReadOnlyList<LocalizacionResponse>>.Ok(result));
         }
 
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet("por-ciudad/{idCiudad}")]
         public async Task<IActionResult> ObtenerPorCiudad(int idCiudad, CancellationToken ct)
         {
@@ -72,7 +72,7 @@ namespace Booking.Autos.API.Controllers.V1
             return Ok(ApiResponse<IReadOnlyList<LocalizacionResponse>>.Ok(result));
         }
 
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet("buscar")]
         public async Task<IActionResult> BuscarPorNombre([FromQuery] string nombre, CancellationToken ct)
         {
@@ -85,7 +85,7 @@ namespace Booking.Autos.API.Controllers.V1
             return Ok(ApiResponse<IReadOnlyList<LocalizacionResponse>>.Ok(items, message));
         }
 
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet("existe")]
         public async Task<IActionResult> Existe([FromQuery] string nombre, [FromQuery] int idCiudad, CancellationToken ct)
         {

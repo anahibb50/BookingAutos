@@ -11,7 +11,6 @@ namespace Booking.Autos.API.Controllers.V1.Catalogos
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v1/ciudades")]
-    [Authorize]
     public class CiudadController : ControllerBase
     {
         private readonly ICiudadService _ciudadService;
@@ -71,7 +70,7 @@ namespace Booking.Autos.API.Controllers.V1.Catalogos
         // ============================================================
         // 🔍 OBTENER POR ID
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet("{id}")]
         public async Task<IActionResult> ObtenerPorId(
             int id,
@@ -85,7 +84,7 @@ namespace Booking.Autos.API.Controllers.V1.Catalogos
         // ============================================================
         // 📄 LISTAR
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> Listar(CancellationToken ct)
         {
@@ -97,7 +96,7 @@ namespace Booking.Autos.API.Controllers.V1.Catalogos
         // ============================================================
         // 🌍 POR PAÍS (CLAVE 🔥)
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet("por-pais/{idPais}")]
         public async Task<IActionResult> ObtenerPorPais(
             int idPais,

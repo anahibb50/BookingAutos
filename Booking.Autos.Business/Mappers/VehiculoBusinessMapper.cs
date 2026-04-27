@@ -80,8 +80,6 @@ namespace Booking.Autos.Business.Mappers
                 Observaciones = request.Observaciones,
                 ImagenUrl = request.ImagenUrl,
 
-                Estado = request.Estado,
-
                 // 🔥 auditoría
                 FechaModificacionUtc = DateTime.UtcNow
             };

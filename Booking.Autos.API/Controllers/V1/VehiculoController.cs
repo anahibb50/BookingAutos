@@ -77,7 +77,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 OBTENER POR ID
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet("{id}")]
         public async Task<IActionResult> ObtenerPorId(int id, CancellationToken ct)
         {
@@ -89,7 +89,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 POR PLACA (🔥 CLAVE)
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet("por-placa")]
         public async Task<IActionResult> ObtenerPorPlaca(
             [FromQuery] string placa,
@@ -103,7 +103,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 📄 LISTAR
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> Listar(CancellationToken ct)
         {
@@ -115,7 +115,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 BÚSQUEDA PAGINADA 🔥🔥🔥
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpPost("buscar")]
         public async Task<IActionResult> Buscar(
             [FromBody] VehiculoFiltroRequest request,
@@ -129,7 +129,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔎 FILTROS
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet("por-marca/{idMarca}")]
         public async Task<IActionResult> PorMarca(int idMarca, CancellationToken ct)
         {
@@ -138,7 +138,7 @@ namespace Booking.Autos.API.Controllers.V1
             return Ok(ApiResponse<IReadOnlyList<VehiculoResponse>>.Ok(result));
         }
 
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet("por-categoria/{idCategoria}")]
         public async Task<IActionResult> PorCategoria(int idCategoria, CancellationToken ct)
         {
@@ -147,7 +147,7 @@ namespace Booking.Autos.API.Controllers.V1
             return Ok(ApiResponse<IReadOnlyList<VehiculoResponse>>.Ok(result));
         }
 
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet("disponibles")]
         public async Task<IActionResult> Disponibles(CancellationToken ct)
         {
@@ -156,7 +156,7 @@ namespace Booking.Autos.API.Controllers.V1
             return Ok(ApiResponse<IReadOnlyList<VehiculoResponse>>.Ok(result));
         }
 
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet("por-precio")]
         public async Task<IActionResult> PorPrecio(
             [FromQuery] decimal min,

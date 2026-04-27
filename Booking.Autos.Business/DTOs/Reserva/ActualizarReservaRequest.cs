@@ -4,6 +4,12 @@ namespace Booking.Autos.Business.DTOs.Reserva
     {
         public int Id { get; set; }
 
+        // Relaciones editables
+        public int IdCliente { get; set; }
+        public int IdVehiculo { get; set; }
+
+        public int CantidadDias { get; set; }
+
         // Fechas
         public DateTime FechaInicio { get; set; }
         public DateTime FechaFin { get; set; }

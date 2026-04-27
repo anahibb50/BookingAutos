@@ -151,10 +151,24 @@ namespace Booking.Autos.DataManagement.Services
             if (existing == null)
                 throw new Exception("Vehículo no encontrado");
 
+            existing.id_marca = model.IdMarca;
+            existing.id_categoria = model.IdCategoria;
+            existing.localizacion_actual = model.IdLocalizacion;
             existing.modelo_vehiculo = model.Modelo;
+            existing.anio_fabricacion = model.AnioFabricacion;
             existing.precio_base_dia = model.PrecioBaseDia;
             existing.color_vehiculo = model.Color;
             existing.placa_vehiculo = model.Placa;
+            existing.tipo_combustible = model.TipoCombustible;
+            existing.tipo_transmision = model.TipoTransmision;
+            existing.capacidad_pasajeros = model.CapacidadPasajeros;
+            existing.capacidad_maletas = model.CapacidadMaletas;
+            existing.numero_puertas = model.NumeroPuertas;
+            existing.aire_acondicionado = model.AireAcondicionado;
+            existing.kilometraje_actual = model.KilometrajeActual;
+            existing.observaciones_generales = model.Observaciones;
+            existing.imagen_referencial_url = model.ImagenUrl;
+            existing.estado_vehiculo = model.Estado;
             existing.fecha_modificacion_utc = DateTime.UtcNow;
             existing.es_eliminado = model.EsEliminado;
             existing.fecha_inhabilitacion_utc = model.FechaInhabilitacionUtc;

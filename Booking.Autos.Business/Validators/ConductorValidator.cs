@@ -18,12 +18,18 @@ namespace Booking.Autos.Business.Validators
                 errors.Add("El tipo de identificación es obligatorio.");
 
             if (!string.IsNullOrWhiteSpace(request.TipoIdentificacion) &&
-                request.TipoIdentificacion != "CED" &&
-                request.TipoIdentificacion != "PAS")
+                request.TipoIdentificacion != "CEDULA" &&
+                request.TipoIdentificacion != "RUC" &&
+                request.TipoIdentificacion != "PASAPORTE")
                 errors.Add("Tipo de identificación inválido.");
 
             if (string.IsNullOrWhiteSpace(request.NumeroIdentificacion))
                 errors.Add("El número de identificación es obligatorio.");
+            else
+                ValidarNumeroIdentificacion(
+                    errors,
+                    request.TipoIdentificacion,
+                    request.NumeroIdentificacion);
 
             // =========================
             // NOMBRES
@@ -99,12 +105,18 @@ namespace Booking.Autos.Business.Validators
                 errors.Add("El tipo de identificación es obligatorio.");
 
             if (!string.IsNullOrWhiteSpace(request.TipoIdentificacion) &&
-                request.TipoIdentificacion != "CED" &&
-                request.TipoIdentificacion != "PAS")
+                request.TipoIdentificacion != "CEDULA" &&
+                request.TipoIdentificacion != "RUC" &&
+                request.TipoIdentificacion != "PASAPORTE")
                 errors.Add("Tipo de identificación inválido.");
 
             if (string.IsNullOrWhiteSpace(request.NumeroIdentificacion))
                 errors.Add("El número de identificación es obligatorio.");
+            else
+                ValidarNumeroIdentificacion(
+                    errors,
+                    request.TipoIdentificacion,
+                    request.NumeroIdentificacion);
 
             // =========================
             // LICENCIA
@@ -150,6 +162,37 @@ namespace Booking.Autos.Business.Validators
                 errors.Add("Estado inválido.");
 
             return errors;
+        }
+
+        private static void ValidarNumeroIdentificacion(
+            List<string> errors,
+            string? tipoIdentificacion,
+            string numeroIdentificacion)
+        {
+            var tipo = tipoIdentificacion?.Trim().ToUpperInvariant();
+            var numero = numeroIdentificacion.Trim();
+
+            if (tipo == "CEDULA")
+            {
+                if (numero.Length != 10)
+                    errors.Add("La cédula debe tener exactamente 10 dígitos.");
+
+                if (!numero.All(char.IsDigit))
+                    errors.Add("La cédula solo debe contener números.");
+            }
+            else if (tipo == "RUC")
+            {
+                if (numero.Length != 13)
+                    errors.Add("El RUC debe tener exactamente 13 dígitos.");
+
+                if (!numero.All(char.IsDigit))
+                    errors.Add("El RUC solo debe contener números.");
+            }
+            else if (tipo == "PASAPORTE")
+            {
+                if (numero.Length < 7 || numero.Length > 20)
+                    errors.Add("El pasaporte debe tener entre 7 y 20 caracteres.");
+            }
         }
     }
 }

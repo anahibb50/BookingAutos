@@ -80,7 +80,7 @@ namespace Booking.Autos.DataAccess.Repositories
             return !await _context.Reservas
                 .AnyAsync(x =>
                     x.id_vehiculo == idVehiculo &&
-                    x.estado_reserva != "CAN" &&
+                    (x.estado_reserva == "PEN" || x.estado_reserva == "CON") &&
                     !x.es_eliminado &&
                     (
                         (inicio >= x.fecha_inicio && inicio < x.fecha_fin) ||

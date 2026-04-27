@@ -21,7 +21,7 @@ namespace Booking.Autos.API.Controllers.V1
             _reservaService = reservaService;
         }
 
-        [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
+        [AllowAnonymous]
         [HttpPost]
         public async Task<IActionResult> Crear([FromBody] CrearReservaRequest? request, CancellationToken ct)
         {
@@ -85,7 +85,7 @@ namespace Booking.Autos.API.Controllers.V1
             return Ok(ApiResponse<DataPagedResult<ReservaResponse>>.Ok(result));
         }
 
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet("disponibilidad")]
         public async Task<IActionResult> VerificarDisponibilidad(
             [FromQuery] int idVehiculo,

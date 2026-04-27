@@ -83,7 +83,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 OBTENER POR ID
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet("{id}")]
         public async Task<IActionResult> ObtenerPorId(
             int id,
@@ -97,7 +97,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 📄 LISTAR
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> Listar(CancellationToken ct)
         {
@@ -109,7 +109,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 POR NOMBRE
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet("por-nombre")]
         public async Task<IActionResult> ObtenerPorNombre(
             [FromQuery] string nombre,
@@ -123,7 +123,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🌍 POR CÓDIGO ISO (🔥 CLAVE)
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [AllowAnonymous]
         [HttpGet("por-iso")]
         public async Task<IActionResult> ObtenerPorIso(
             [FromQuery] string codigoIso,
