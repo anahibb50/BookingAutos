@@ -1,4 +1,5 @@
 ﻿using Booking.Autos.Business.DTOs.Auth;
+using Booking.Autos.Business.DTOs.Usuario;
 
 namespace Booking.Autos.Business.Interfaces
 {
@@ -10,6 +11,10 @@ namespace Booking.Autos.Business.Interfaces
 
         Task<LoginResponse> LoginAsync(
             LoginRequest request,
+            CancellationToken cancellationToken = default);
+
+        Task<LoginResponse> RegisterAsync(
+            CrearUsuarioRequest request,
             CancellationToken cancellationToken = default);
 
         // =========================

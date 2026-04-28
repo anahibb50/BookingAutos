@@ -14,7 +14,7 @@ namespace Booking.Autos.Business.Mappers
             {
                 Username = request.Username,
                 Correo = request.Correo,
-                IdCliente = request.IdCliente,
+                IdCliente = null,
 
                 // 🔥 SISTEMA
                 Guid = Guid.NewGuid(),

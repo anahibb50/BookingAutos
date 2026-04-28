@@ -71,7 +71,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 OBTENER POR ID
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
         [HttpGet("{id}")]
         public async Task<IActionResult> ObtenerPorId(
             int id,
@@ -85,7 +85,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 POR IDENTIFICACIÓN (🔥 CLAVE)
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
         [HttpGet("por-identificacion/{identificacion}")]
         public async Task<IActionResult> ObtenerPorIdentificacion(
             string identificacion,
@@ -99,7 +99,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 📄 LISTAR
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
         [HttpGet]
         public async Task<IActionResult> Listar(CancellationToken ct)
         {
@@ -111,7 +111,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 BÚSQUEDA PAGINADA 🔥🔥🔥
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
         [HttpPost("buscar")]
         public async Task<IActionResult> Buscar(
             [FromBody] ClienteFiltroRequest request,
@@ -125,7 +125,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 VALIDACIÓN
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
         [HttpGet("existe")]
         public async Task<IActionResult> Existe(
             [FromQuery] string identificacion,

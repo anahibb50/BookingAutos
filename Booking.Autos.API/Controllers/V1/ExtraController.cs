@@ -70,7 +70,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 OBTENER POR ID
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
         [HttpGet("{id}")]
         public async Task<IActionResult> ObtenerPorId(
             int id,
@@ -84,7 +84,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 📄 LISTAR
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
         [HttpGet]
         public async Task<IActionResult> Listar(CancellationToken ct)
         {
@@ -96,7 +96,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔥 SOLO ACTIVOS
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
         [HttpGet("activos")]
         public async Task<IActionResult> ListarActivos(CancellationToken ct)
         {
@@ -108,7 +108,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 BUSCAR POR NOMBRE
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
         [HttpGet("buscar")]
         public async Task<IActionResult> BuscarPorNombre(
             [FromQuery] string nombre,

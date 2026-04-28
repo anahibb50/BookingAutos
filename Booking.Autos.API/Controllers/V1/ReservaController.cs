@@ -21,7 +21,7 @@ namespace Booking.Autos.API.Controllers.V1
             _reservaService = reservaService;
         }
 
-        [AllowAnonymous]
+        [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
         [HttpPost]
         public async Task<IActionResult> Crear([FromBody] CrearReservaRequest? request, CancellationToken ct)
         {
@@ -30,6 +30,30 @@ namespace Booking.Autos.API.Controllers.V1
 
             var result = await _reservaService.CrearAsync(request, ct);
             return Ok(ApiResponse<ReservaResponse>.Ok(result, "Reserva creada"));
+        }
+
+        [Authorize(Roles = "CLIENTE")]
+        [HttpPost("crear-y-confirmar")]
+        public async Task<IActionResult> CrearYConfirmar([FromBody] CrearReservaRequest? request, CancellationToken ct)
+        {
+            if (request == null)
+                return BadRequest(new ApiErrorResponse("El cuerpo de la solicitud es obligatorio."));
+
+            var idClienteSesion = ObtenerIdClienteDesdeToken();
+            if (!idClienteSesion.HasValue)
+                return StatusCode(StatusCodes.Status403Forbidden, new ApiErrorResponse("No se pudo determinar el cliente de la sesión."));
+
+            if (request.IdCliente != idClienteSesion.Value)
+                return StatusCode(StatusCodes.Status403Forbidden, new ApiErrorResponse("No puedes crear reservas para otro cliente."));
+
+            var creada = await _reservaService.CrearAsync(request, ct);
+            var confirmada = await _reservaService.ConfirmarAsync(creada.Id, ct);
+
+            if (!confirmada)
+                return StatusCode(StatusCodes.Status409Conflict, new ApiErrorResponse("No se pudo confirmar la reserva recién creada."));
+
+            var result = await _reservaService.ObtenerPorIdAsync(creada.Id, ct);
+            return Ok(ApiResponse<ReservaResponse>.Ok(result, "Reserva creada y confirmada"));
         }
 
         [Authorize(Roles = "ADMIN,VENDEDOR")]
@@ -49,6 +73,19 @@ namespace Booking.Autos.API.Controllers.V1
         [HttpGet("{id}")]
         public async Task<IActionResult> ObtenerPorId(int id, CancellationToken ct)
         {
+            if (User.IsInRole("CLIENTE"))
+            {
+                var idClienteSesion = ObtenerIdClienteDesdeToken();
+                if (!idClienteSesion.HasValue)
+                    return StatusCode(StatusCodes.Status403Forbidden, new ApiErrorResponse("No se pudo determinar el cliente de la sesión."));
+
+                var reservaCliente = await _reservaService.ObtenerPorIdAsync(id, ct);
+                if (reservaCliente.IdCliente != idClienteSesion.Value)
+                    return StatusCode(StatusCodes.Status403Forbidden, new ApiErrorResponse("No puedes ver reservas de otro cliente."));
+
+                return Ok(ApiResponse<ReservaResponse>.Ok(reservaCliente));
+            }
+
             var result = await _reservaService.ObtenerPorIdAsync(id, ct);
             return Ok(ApiResponse<ReservaResponse>.Ok(result));
         }
@@ -66,6 +103,18 @@ namespace Booking.Autos.API.Controllers.V1
         public async Task<IActionResult> PorCliente(int idCliente, CancellationToken ct)
         {
             var result = await _reservaService.ObtenerPorClienteAsync(idCliente, ct);
+            return Ok(ApiResponse<IReadOnlyList<ReservaResponse>>.Ok(result));
+        }
+
+        [Authorize(Roles = "CLIENTE")]
+        [HttpGet("mis-reservas")]
+        public async Task<IActionResult> MisReservas(CancellationToken ct)
+        {
+            var idClienteSesion = ObtenerIdClienteDesdeToken();
+            if (!idClienteSesion.HasValue)
+                return StatusCode(StatusCodes.Status403Forbidden, new ApiErrorResponse("No se pudo determinar el cliente de la sesión."));
+
+            var result = await _reservaService.ObtenerPorClienteAsync(idClienteSesion.Value, ct);
             return Ok(ApiResponse<IReadOnlyList<ReservaResponse>>.Ok(result));
         }
 
@@ -105,7 +154,7 @@ namespace Booking.Autos.API.Controllers.V1
             return Ok(ApiResponse<bool>.Ok(ok, "Reserva confirmada"));
         }
 
-        [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpPost("{id}/cancelar")]
         public async Task<IActionResult> Cancelar(int id, [FromQuery] string motivo, CancellationToken ct)
         {
@@ -114,6 +163,15 @@ namespace Booking.Autos.API.Controllers.V1
 
             var ok = await _reservaService.CancelarAsync(id, motivo, ct);
             return Ok(ApiResponse<bool>.Ok(ok, "Reserva cancelada"));
+        }
+
+        private int? ObtenerIdClienteDesdeToken()
+        {
+            var claim = User.FindFirst("id_cliente")?.Value;
+            if (int.TryParse(claim, out var idCliente))
+                return idCliente;
+
+            return null;
         }
     }
 }

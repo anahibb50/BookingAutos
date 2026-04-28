@@ -1,5 +1,7 @@
 using Booking.Autos.Business.DTOs.Reserva;
 using Booking.Autos.Business.DTOs.ReservaExtra;
+using Booking.Autos.Business.DTOs.Conductor;
+using Booking.Autos.Business.DTOs.ConductorReserva;
 using Booking.Autos.Business.Exceptions;
 using Booking.Autos.Business.Interfaces;
 using Booking.Autos.Business.Mappers;
@@ -15,7 +17,8 @@ namespace Booking.Autos.Business.Services
     {
         private readonly IReservaDataService _reservaDataService;
         private readonly IReservaExtraDataService _reservaExtraDataService;
-        private readonly IConductorReservaService _conductorService;
+        private readonly IConductorReservaService _conductorReservaService;
+        private readonly IConductorService _conductorService;
         private readonly IVehiculoDataService _vehiculoDataService;
         private readonly IExtraDataService _extraDataService;
         private readonly IClienteDataService _clienteDataService;
@@ -26,7 +29,8 @@ namespace Booking.Autos.Business.Services
         public ReservaService(
             IReservaDataService reservaDataService,
             IReservaExtraDataService reservaExtraDataService,
-            IConductorReservaService conductorService,
+            IConductorReservaService conductorReservaService,
+            IConductorService conductorService,
             IExtraDataService extraDataService,
             IVehiculoDataService vehiculoDataService,
             IClienteDataService clienteDataService,
@@ -37,6 +41,7 @@ namespace Booking.Autos.Business.Services
             _reservaDataService = reservaDataService;
             _reservaExtraDataService = reservaExtraDataService;
             _extraDataService = extraDataService;
+            _conductorReservaService = conductorReservaService;
             _conductorService = conductorService;
             _vehiculoDataService = vehiculoDataService;
             _clienteDataService = clienteDataService;
@@ -51,7 +56,7 @@ namespace Booking.Autos.Business.Services
             if (errors.Any())
                 throw new ValidationException(errors.ToList());
 
-            var cantidadDiasCalculada = (request.FechaFin.Date - request.FechaInicio.Date).Days;
+            var cantidadDiasCalculada = CalcularCantidadDias(request.FechaInicio, request.HoraInicio, request.FechaFin, request.HoraFin);
 
             var vehiculo = await _vehiculoDataService.GetByIdAsync(request.IdVehiculo, ct);
             if (vehiculo == null)
@@ -106,7 +111,30 @@ namespace Booking.Autos.Business.Services
             {
                 foreach (var conductor in request.Conductores)
                 {
-                    await _conductorService.CrearAsync(reserva.Id, conductor, ct);
+                    var idConductor = conductor.IdConductor;
+
+                    if (idConductor <= 0)
+                    {
+                        if (conductor.NuevoConductor == null)
+                            throw new ValidationException(new List<string>
+                            {
+                                "Debes enviar IdConductor válido o el objeto NuevoConductor para crearlo."
+                            });
+
+                        var conductorCreado = await _conductorService.CrearAsync(conductor.NuevoConductor, ct);
+                        idConductor = conductorCreado.Id;
+                    }
+
+                    await _conductorReservaService.CrearAsync(
+                        reserva.Id,
+                        new CrearConductorReservaDetalleRequest
+                        {
+                            IdConductor = idConductor,
+                            Rol = conductor.Rol,
+                            EsPrincipal = conductor.EsPrincipal,
+                            Observaciones = conductor.Observaciones
+                        },
+                        ct);
                 }
             }
 
@@ -126,7 +154,7 @@ namespace Booking.Autos.Business.Services
             if (existente.Estado == "CON" || existente.Estado == "CAN")
                 throw new ValidationException(new List<string> { "No se puede actualizar una reserva confirmada o cancelada." });
 
-            var cantidadDiasCalculada = (request.FechaFin.Date - request.FechaInicio.Date).Days;
+            var cantidadDiasCalculada = CalcularCantidadDias(request.FechaInicio, request.HoraInicio, request.FechaFin, request.HoraFin);
 
             var vehiculo = await _vehiculoDataService.GetByIdAsync(request.IdVehiculo, ct);
             if (vehiculo == null)
@@ -174,7 +202,7 @@ namespace Booking.Autos.Business.Services
             var extras = await _reservaExtraDataService.GetByReservaAsync(id, ct);
             response.Extras = ReservaExtraBusinessMapper.ToResponseList(extras);
 
-            var conductores = await _conductorService.ObtenerPorReservaAsync(id, ct);
+            var conductores = await _conductorReservaService.ObtenerPorReservaAsync(id, ct);
             response.Conductores = conductores.ToList();
 
             return response;
@@ -384,9 +412,16 @@ namespace Booking.Autos.Business.Services
                         continue;
                     }
 
-                    var conductorDb = await _conductorDataService.GetByIdAsync(conductor.IdConductor, ct);
-                    if (conductorDb == null)
-                        errors.Add($"No existe el conductor con id {conductor.IdConductor}.");
+                    if (conductor.IdConductor > 0)
+                    {
+                        var conductorDb = await _conductorDataService.GetByIdAsync(conductor.IdConductor, ct);
+                        if (conductorDb == null)
+                            errors.Add($"No existe el conductor con id {conductor.IdConductor}.");
+                    }
+                    else if (conductor.NuevoConductor == null)
+                    {
+                        errors.Add("Debes enviar IdConductor válido o el objeto NuevoConductor para crearlo.");
+                    }
                 }
             }
 
@@ -454,6 +489,19 @@ namespace Booking.Autos.Business.Services
             var total = subtotal + iva;
 
             return (subtotal, iva, total);
+        }
+
+        private static int CalcularCantidadDias(DateTime fechaInicio, TimeSpan? horaInicio, DateTime fechaFin, TimeSpan? horaFin)
+        {
+            var inicio = fechaInicio.Date.Add(horaInicio ?? fechaInicio.TimeOfDay);
+            var fin = fechaFin.Date.Add(horaFin ?? fechaFin.TimeOfDay);
+            var duracion = fin - inicio;
+
+            // Ya se valida previamente que inicio < fin, aquí solo dejamos un mínimo defensivo.
+            if (duracion.TotalHours <= 0)
+                return 1;
+
+            return (int)Math.Ceiling(duracion.TotalHours / 24d);
         }
     }
 }

@@ -77,7 +77,9 @@ namespace Booking.Autos.DataManagement.Services
             entity.estado_usuario = "ACT";
 
             // 🔐 HASH PASSWORD
-            entity.password_hash = HashPassword(passwordPlano);
+            var salt = GenerateSalt();
+            entity.password_salt = salt;
+            entity.password_hash = HashPassword(passwordPlano, salt);
 
             await _unitOfWork.UsuariosApp.AddAsync(entity, ct);
             await _unitOfWork.SaveChangesAsync(ct);
@@ -174,12 +176,17 @@ namespace Booking.Autos.DataManagement.Services
         // 🔐 SEGURIDAD
         // =========================
 
-        private string HashPassword(string password)
+        private static string GenerateSalt()
+        {
+            var saltBytes = RandomNumberGenerator.GetBytes(16);
+            return Convert.ToBase64String(saltBytes);
+        }
+
+        private static string HashPassword(string password, string salt)
         {
             using var sha256 = SHA256.Create();
-            var bytes = Encoding.UTF8.GetBytes(password);
+            var bytes = Encoding.UTF8.GetBytes($"{password}:{salt}");
             var hash = sha256.ComputeHash(bytes);
-
             return Convert.ToBase64String(hash);
         }
     }

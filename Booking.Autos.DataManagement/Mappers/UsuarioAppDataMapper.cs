@@ -13,6 +13,7 @@ namespace Booking.Autos.DataManagement.Mappers
                 Id = entity.id_usuario,
                 Guid = entity.usuario_guid,
                 PasswordHash = entity.password_hash,
+                PasswordSalt = entity.password_salt,
 
                 Username = entity.username,
                 Correo = entity.correo,
@@ -45,6 +46,8 @@ namespace Booking.Autos.DataManagement.Mappers
                 correo = model.Correo,
 
                 id_cliente = model.IdCliente,
+                password_hash = model.PasswordHash,
+                password_salt = model.PasswordSalt,
 
                 estado_usuario = model.Estado,
                 activo = model.Activo,

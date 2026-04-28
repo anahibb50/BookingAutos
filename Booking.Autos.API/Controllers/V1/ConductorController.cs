@@ -24,7 +24,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 📌 CREAR
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
         [HttpPost]
         public async Task<IActionResult> Crear(
             [FromBody] CrearConductorRequest request,
@@ -71,7 +71,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 OBTENER POR ID
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
         [HttpGet("{id}")]
         public async Task<IActionResult> ObtenerPorId(
             int id,
@@ -85,7 +85,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 POR IDENTIFICACIÓN
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
         [HttpGet("por-identificacion/{identificacion}")]
         public async Task<IActionResult> ObtenerPorIdentificacion(
             string identificacion,
@@ -99,7 +99,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 POR LICENCIA (🔥 IMPORTANTE)
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
         [HttpGet("por-licencia/{numeroLicencia}")]
         public async Task<IActionResult> ObtenerPorLicencia(
             string numeroLicencia,
@@ -113,7 +113,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 📄 LISTAR
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
         [HttpGet]
         public async Task<IActionResult> Listar(CancellationToken ct)
         {
@@ -125,7 +125,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 BÚSQUEDA PAGINADA 🔥🔥🔥
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
         [HttpPost("buscar")]
         public async Task<IActionResult> Buscar(
             [FromBody] ConductorFiltroRequest request,
@@ -139,7 +139,7 @@ namespace Booking.Autos.API.Controllers.V1
         // ============================================================
         // 🔍 VALIDACIONES
         // ============================================================
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
         [HttpGet("existe-identificacion")]
         public async Task<IActionResult> ExistePorIdentificacion(
             [FromQuery] string identificacion,
@@ -150,7 +150,7 @@ namespace Booking.Autos.API.Controllers.V1
             return Ok(ApiResponse<bool>.Ok(existe));
         }
 
-        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
         [HttpGet("existe-licencia")]
         public async Task<IActionResult> ExistePorLicencia(
             [FromQuery] string numeroLicencia,

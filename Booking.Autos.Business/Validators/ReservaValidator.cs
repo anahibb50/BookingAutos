@@ -45,12 +45,21 @@ namespace Booking.Autos.Business.Validators
                 errors.Add("No se puede reservar en fechas pasadas.");
 
             if (request.FechaInicio != default &&
-                request.FechaFin != default &&
-                request.FechaFin > request.FechaInicio)
+                request.FechaFin != default)
             {
-                var diasCalculados = (request.FechaFin.Date - request.FechaInicio.Date).Days;
-                if (diasCalculados != request.CantidadDias)
-                    errors.Add("La cantidad de días no coincide con el rango entre la fecha de inicio y la fecha de fin.");
+                var inicio = ConstruirFechaHora(request.FechaInicio, request.HoraInicio);
+                var fin = ConstruirFechaHora(request.FechaFin, request.HoraFin);
+
+                if (inicio >= fin)
+                {
+                    errors.Add("Fechas inválidas: la fecha/hora de fin debe ser posterior a la fecha/hora de inicio.");
+                }
+                else
+                {
+                    var diasCalculados = CalcularDiasPorDuracion(inicio, fin);
+                    if (diasCalculados != request.CantidadDias)
+                        errors.Add($"La cantidad de días no coincide con el rango seleccionado. Valor esperado: {diasCalculados}.");
+                }
             }
 
             // =========================
@@ -98,12 +107,21 @@ namespace Booking.Autos.Business.Validators
                 errors.Add("No se puede modificar a fechas pasadas.");
 
             if (request.FechaInicio != default &&
-                request.FechaFin != default &&
-                request.FechaFin > request.FechaInicio)
+                request.FechaFin != default)
             {
-                var diasCalculados = (request.FechaFin.Date - request.FechaInicio.Date).Days;
-                if (diasCalculados != request.CantidadDias)
-                    errors.Add("La cantidad de días no coincide con el rango entre la fecha de inicio y la fecha de fin.");
+                var inicio = ConstruirFechaHora(request.FechaInicio, request.HoraInicio);
+                var fin = ConstruirFechaHora(request.FechaFin, request.HoraFin);
+
+                if (inicio >= fin)
+                {
+                    errors.Add("Fechas inválidas: la fecha/hora de fin debe ser posterior a la fecha/hora de inicio.");
+                }
+                else
+                {
+                    var diasCalculados = CalcularDiasPorDuracion(inicio, fin);
+                    if (diasCalculados != request.CantidadDias)
+                        errors.Add($"La cantidad de días no coincide con el rango seleccionado. Valor esperado: {diasCalculados}.");
+                }
             }
 
             return errors;
@@ -136,6 +154,18 @@ namespace Booking.Autos.Business.Validators
                 errors.Add("El motivo de cancelación es obligatorio.");
 
             return errors;
+        }
+
+        private static DateTime ConstruirFechaHora(DateTime fecha, TimeSpan? hora)
+        {
+            var horaFinal = hora ?? fecha.TimeOfDay;
+            return fecha.Date.Add(horaFinal);
+        }
+
+        private static int CalcularDiasPorDuracion(DateTime inicio, DateTime fin)
+        {
+            var duracion = fin - inicio;
+            return (int)Math.Ceiling(duracion.TotalHours / 24d);
         }
     }
 }

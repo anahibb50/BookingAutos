@@ -16,6 +16,9 @@
 
         public string Correo { get; set; }
 
+        /// <summary>Cliente vinculado en <c>seguridad.USUARIOAPP.id_cliente</c> (reservas lo requieren).</summary>
+        public int? IdCliente { get; set; }
+
         // 🔥 ROLES (CLAVE)
         public List<string> Roles { get; set; } = new();
     }
