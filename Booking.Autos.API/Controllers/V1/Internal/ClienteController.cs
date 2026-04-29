@@ -2,22 +2,23 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Booking.Autos.Business.Interfaces;
-using Booking.Autos.Business.DTOs.Extra;
+using Booking.Autos.Business.DTOs.Cliente;
 using Booking.Autos.API.Models.Common;
+using Booking.Autos.DataManagement.Common;
 
-namespace Booking.Autos.API.Controllers.V1
+namespace Booking.Autos.API.Controllers.V1.Internal
 {
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/v1/extras")]
+    [Route("api/v1/clientes")]
     [Authorize]
-    public class ExtraController : ControllerBase
+    public class ClienteController : ControllerBase
     {
-        private readonly IExtraService _extraService;
+        private readonly IClienteService _clienteService;
 
-        public ExtraController(IExtraService extraService)
+        public ClienteController(IClienteService clienteService)
         {
-            _extraService = extraService;
+            _clienteService = clienteService;
         }
 
         // ============================================================
@@ -26,12 +27,12 @@ namespace Booking.Autos.API.Controllers.V1
         [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpPost]
         public async Task<IActionResult> Crear(
-            [FromBody] CrearExtraRequest request,
+            [FromBody] CrearClienteRequest request,
             CancellationToken ct)
         {
-            var result = await _extraService.CrearAsync(request, ct);
+            var result = await _clienteService.CrearAsync(request, ct);
 
-            return Ok(ApiResponse<ExtraResponse>.Ok(result, "Extra creado"));
+            return Ok(ApiResponse<ClienteResponse>.Ok(result, "Cliente creado"));
         }
 
         // ============================================================
@@ -41,14 +42,14 @@ namespace Booking.Autos.API.Controllers.V1
         [HttpPut("{id}")]
         public async Task<IActionResult> Actualizar(
             int id,
-            [FromBody] ActualizarExtraRequest request,
+            [FromBody] ActualizarClienteRequest request,
             CancellationToken ct)
         {
             request.Id = id;
 
-            var result = await _extraService.ActualizarAsync(request, ct);
+            var result = await _clienteService.ActualizarAsync(request, ct);
 
-            return Ok(ApiResponse<ExtraResponse>.Ok(result, "Extra actualizado"));
+            return Ok(ApiResponse<ClienteResponse>.Ok(result, "Cliente actualizado"));
         }
 
         // ============================================================
@@ -62,9 +63,9 @@ namespace Booking.Autos.API.Controllers.V1
         {
             var usuario = User?.Identity?.Name ?? "system";
 
-            await _extraService.EliminarLogicoAsync(id, usuario, ct);
+            await _clienteService.EliminarLogicoAsync(id, usuario, ct);
 
-            return Ok(ApiResponse<string>.Ok("OK", "Extra eliminado"));
+            return Ok(ApiResponse<string>.Ok("OK", "Cliente eliminado"));
         }
 
         // ============================================================
@@ -76,9 +77,23 @@ namespace Booking.Autos.API.Controllers.V1
             int id,
             CancellationToken ct)
         {
-            var result = await _extraService.ObtenerPorIdAsync(id, ct);
+            var result = await _clienteService.ObtenerPorIdAsync(id, ct);
 
-            return Ok(ApiResponse<ExtraResponse>.Ok(result));
+            return Ok(ApiResponse<ClienteResponse>.Ok(result));
+        }
+
+        // ============================================================
+        // 🔍 POR IDENTIFICACIÓN (🔥 CLAVE)
+        // ============================================================
+        [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
+        [HttpGet("por-identificacion/{identificacion}")]
+        public async Task<IActionResult> ObtenerPorIdentificacion(
+            string identificacion,
+            CancellationToken ct)
+        {
+            var result = await _clienteService.ObtenerPorIdentificacionAsync(identificacion, ct);
+
+            return Ok(ApiResponse<ClienteResponse?>.Ok(result));
         }
 
         // ============================================================
@@ -88,50 +103,37 @@ namespace Booking.Autos.API.Controllers.V1
         [HttpGet]
         public async Task<IActionResult> Listar(CancellationToken ct)
         {
-            var result = await _extraService.ListarAsync(ct);
+            var result = await _clienteService.ListarAsync(ct);
 
-            return Ok(ApiResponse<IReadOnlyList<ExtraResponse>>.Ok(result));
+            return Ok(ApiResponse<IReadOnlyList<ClienteResponse>>.Ok(result));
         }
 
         // ============================================================
-        // 🔥 SOLO ACTIVOS
+        // 🔍 BÚSQUEDA PAGINADA 🔥🔥🔥
         // ============================================================
         [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
-        [HttpGet("activos")]
-        public async Task<IActionResult> ListarActivos(CancellationToken ct)
+        [HttpPost("buscar")]
+        public async Task<IActionResult> Buscar(
+            [FromBody] ClienteFiltroRequest request,
+            CancellationToken ct)
         {
-            var result = await _extraService.ListarActivosAsync(ct);
+            var result = await _clienteService.BuscarAsync(request, ct);
 
-            return Ok(ApiResponse<IReadOnlyList<ExtraResponse>>.Ok(result));
+            return Ok(ApiResponse<DataPagedResult<ClienteResponse>>.Ok(result));
         }
 
         // ============================================================
-        // 🔍 BUSCAR POR NOMBRE
+        // 🔍 VALIDACIÓN
         // ============================================================
         [Authorize(Roles = "ADMIN,VENDEDOR,CLIENTE")]
-        [HttpGet("buscar")]
-        public async Task<IActionResult> BuscarPorNombre(
-            [FromQuery] string nombre,
+        [HttpGet("existe")]
+        public async Task<IActionResult> Existe(
+            [FromQuery] string identificacion,
             CancellationToken ct)
         {
-            var result = await _extraService.ObtenerPorNombreAsync(nombre, ct);
+            var existe = await _clienteService.ExistePorIdentificacionAsync(identificacion, ct);
 
-            return Ok(ApiResponse<IReadOnlyList<ExtraResponse>>.Ok(result));
-        }
-
-        // ============================================================
-        // 💰 ACTUALIZAR PRECIO (🔥 ESPECIAL)
-        // ============================================================
-        [Authorize(Roles = "ADMIN")]
-        [HttpPatch("{id}/precio")]
-        public async Task<IActionResult> ActualizarPrecio(
-            int id,
-            [FromQuery] decimal nuevoPrecio,
-            CancellationToken ct)
-        {
-            var actualizado = await _extraService.ActualizarPrecioAsync(id, nuevoPrecio, ct);
-
-            return Ok(ApiResponse<bool>.Ok(actualizado, "Precio actualizado"));
+            return Ok(ApiResponse<bool>.Ok(existe));
         }
     }
-}   
+}

@@ -59,6 +59,9 @@ namespace Booking.Autos.Business.Services
             if (existente is null)
                 throw new NotFoundException("Factura", request.Id);
 
+            if (!string.Equals(existente.Estado, "ABI", StringComparison.OrdinalIgnoreCase))
+                throw new ValidationException(new List<string> { "Solo se pueden actualizar facturas en estado ABI." });
+
             var model = FacturaBusinessMapper.ToDataModel(request);
             model.Guid = existente.Guid;
             model.IdReserva = existente.IdReserva;
@@ -139,8 +142,8 @@ namespace Booking.Autos.Business.Services
             if (factura is null)
                 throw new NotFoundException("Factura", id);
 
-            if (factura.Estado == "APR")
-                throw new ValidationException(new List<string> { "La factura ya está aprobada." });
+            if (!string.Equals(factura.Estado, "ABI", StringComparison.OrdinalIgnoreCase))
+                throw new ValidationException(new List<string> { "Solo se pueden aprobar facturas en estado ABI." });
 
             return await _dataService.AprobarAsync(id, ct);
         }
@@ -152,8 +155,8 @@ namespace Booking.Autos.Business.Services
             if (factura is null)
                 throw new NotFoundException("Factura", id);
 
-            if (factura.Estado == "ANU")
-                throw new ValidationException(new List<string> { "La factura ya está anulada." });
+            if (!string.Equals(factura.Estado, "ABI", StringComparison.OrdinalIgnoreCase))
+                throw new ValidationException(new List<string> { "Solo se pueden anular facturas en estado ABI." });
 
             return await _dataService.AnularAsync(id, motivo, ct);
         }

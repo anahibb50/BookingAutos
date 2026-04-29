@@ -72,8 +72,13 @@ namespace Booking.Autos.API.Middleware
                     response = new ApiErrorResponse("Ya existe un registro con un valor único duplicado.");
                     break;
 
+                case DbUpdateException:
+                    statusCode = HttpStatusCode.BadRequest;
+                    response = new ApiErrorResponse("No se pudo guardar la información. Verifica los datos e inténtalo nuevamente.");
+                    break;
+
                 default:
-                    response = new ApiErrorResponse(ex.Message);
+                    response = new ApiErrorResponse("Ocurrió un error interno. Intenta nuevamente más tarde.");
                     break;
             }
 

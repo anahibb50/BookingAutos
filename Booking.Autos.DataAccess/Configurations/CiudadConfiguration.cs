@@ -60,6 +60,11 @@ namespace Booking.Autos.DataAccess.Configurations
                 .IsUnique()
                 .HasDatabaseName("UQ_ciudad_guid");
 
+            // Índice Único para evitar códigos postales duplicados
+            builder.HasIndex(e => e.codigo_postal)
+                .IsUnique()
+                .HasDatabaseName("UQ_ciudades_codigo_postal");
+
             // --- Relación con la tabla Paises ---
             builder.HasOne(c => c.Pais) // Asumiendo que en CiudadEntity tienes: public PaisEntity Pais { get; set; }
                 .WithMany(p => p.Ciudades) // Y en PaisEntity: public ICollection<CiudadEntity> Ciudades { get; set; }

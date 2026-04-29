@@ -6,7 +6,7 @@ using Booking.Autos.Business.DTOs.Catalogos.Ciudad;
 using Booking.Autos.Business.DTOs.Ciudad;
 using Booking.Autos.API.Models.Common;
 
-namespace Booking.Autos.API.Controllers.V1.Catalogos
+namespace Booking.Autos.API.Controllers.V1.Internal
 {
     [ApiController]
     [ApiVersion("1.0")]

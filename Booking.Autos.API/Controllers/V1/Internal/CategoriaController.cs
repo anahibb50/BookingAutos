@@ -2,63 +2,56 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Booking.Autos.Business.Interfaces;
-using Booking.Autos.Business.DTOs.Rol;
+using Booking.Autos.Business.DTOs.Catalogos.Categoria;
 using Booking.Autos.API.Models.Common;
 
-namespace Booking.Autos.API.Controllers.V1
+namespace Booking.Autos.API.Controllers.V1.Internal
 {
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/v1/roles")]
-    [Authorize] // 🔥 importante en seguridad
-    public class RolController : ControllerBase
+    [Route("api/v1/categorias")]
+    public class CategoriaController : ControllerBase
     {
-        private readonly IRolService _rolService;
+        private readonly ICategoriaService _categoriaService;
 
-        public RolController(IRolService rolService)
+        public CategoriaController(ICategoriaService categoriaService)
         {
-            _rolService = rolService;
+            _categoriaService = categoriaService;
         }
 
         // ============================================================
         // 📌 CREAR
         // ============================================================
-        [Authorize(Roles = "ADMIN")]
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpPost]
         public async Task<IActionResult> Crear(
-            [FromBody] CrearRolRequest request,
+            [FromBody] CrearCategoriaRequest request,
             CancellationToken ct)
         {
-            if (request == null)
-                return BadRequest(new ApiErrorResponse("Request inválido"));
+            var result = await _categoriaService.CrearAsync(request, ct);
 
-            var result = await _rolService.CrearAsync(request, ct);
-
-            return Ok(ApiResponse<RolResponse>.Ok(result, "Rol creado"));
+            return Ok(ApiResponse<CategoriaResponse>.Ok(result, "Categoría creada"));
         }
 
         // ============================================================
         // ✏️ ACTUALIZAR
         // ============================================================
-        [Authorize(Roles = "ADMIN")]
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Actualizar(
             int id,
-            [FromBody] ActualizarRolRequest request,
+            [FromBody] ActualizarCategoriaRequest request,
             CancellationToken ct)
         {
-            if (request == null)
-                return BadRequest(new ApiErrorResponse("Request inválido"));
+            request.Id = id; // 🔥 importante
 
-            request.IdRol = id;
+            var result = await _categoriaService.ActualizarAsync(request, ct);
 
-            var result = await _rolService.ActualizarAsync(request, ct);
-
-            return Ok(ApiResponse<RolResponse>.Ok(result, "Rol actualizado"));
+            return Ok(ApiResponse<CategoriaResponse>.Ok(result, "Categoría actualizada"));
         }
 
         // ============================================================
-        // ❌ ELIMINAR
+        // ❌ ELIMINAR LÓGICO
         // ============================================================
         [Authorize(Roles = "ADMIN")]
         [HttpDelete("{id}")]
@@ -66,49 +59,52 @@ namespace Booking.Autos.API.Controllers.V1
             int id,
             CancellationToken ct)
         {
-            await _rolService.EliminarAsync(id, ct);
+            // 🔥 usuario desde JWT (opcional pero PRO)
+            var usuario = User?.Identity?.Name ?? "system";
 
-            return Ok(ApiResponse<string>.Ok("OK", "Rol eliminado"));
+            await _categoriaService.EliminarLogicoAsync(id, usuario, ct);
+
+            return Ok(ApiResponse<string>.Ok("OK", "Categoría eliminada"));
         }
 
         // ============================================================
         // 🔍 OBTENER POR ID
         // ============================================================
-        [Authorize(Roles = "ADMIN")]
+        [AllowAnonymous]
         [HttpGet("{id}")]
         public async Task<IActionResult> ObtenerPorId(
             int id,
             CancellationToken ct)
         {
-            var result = await _rolService.ObtenerPorIdAsync(id, ct);
+            var result = await _categoriaService.ObtenerPorIdAsync(id, ct);
 
-            return Ok(ApiResponse<RolResponse?>.Ok(result));
+            return Ok(ApiResponse<CategoriaResponse>.Ok(result));
         }
 
         // ============================================================
         // 📄 LISTAR
         // ============================================================
-        [Authorize(Roles = "ADMIN")]
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> Listar(CancellationToken ct)
         {
-            var result = await _rolService.ListarAsync(ct);
+            var result = await _categoriaService.ListarAsync(ct);
 
-            return Ok(ApiResponse<IReadOnlyList<RolResponse>>.Ok(result));
+            return Ok(ApiResponse<IReadOnlyList<CategoriaResponse>>.Ok(result));
         }
 
         // ============================================================
-        // 🔍 FILTRAR
+        // 🔍 VALIDACIÓN (EXISTE)
         // ============================================================
-        [Authorize(Roles = "ADMIN")]
-        [HttpPost("filtrar")]
-        public async Task<IActionResult> Filtrar(
-            [FromBody] RolFiltroRequest request,
+        [Authorize(Roles = "ADMIN,VENDEDOR")]
+        [HttpGet("existe")]
+        public async Task<IActionResult> Existe(
+            [FromQuery] string nombre,
             CancellationToken ct)
         {
-            var result = await _rolService.FiltrarAsync(request, ct);
+            var existe = await _categoriaService.ExistePorNombreAsync(nombre, ct);
 
-            return Ok(ApiResponse<IReadOnlyList<RolResponse>>.Ok(result));
+            return Ok(ApiResponse<bool>.Ok(existe));
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Booking.Autos.API.Extensions;
+using Booking.Autos.API.Filters;
 using Booking.Autos.API.Middleware;
 using Booking.Autos.API.Models.Common;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +13,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Controllers
 builder.Services
-    .AddControllers()
+    .AddControllers(options =>
+    {
+        options.Filters.Add<RequiredStringNoWhitespaceFilter>();
+    })
     .ConfigureApiBehaviorOptions(options =>
     {
         // Unifica los 400 automáticos de ApiController con el formato de error del proyecto.
@@ -83,10 +87,7 @@ var app = builder.Build();
 // ============================================================
 
 // 🔥 Swagger SOLO en desarrollo
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwaggerExtension();
-}
+app.UseSwaggerExtension();
 
 // 🔥 Middleware global de errores (MUY IMPORTANTE)
 app.UseMiddleware<ExceptionHandlingMiddleware>();

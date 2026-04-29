@@ -355,10 +355,26 @@ namespace Booking.Autos.Business.Services
             var cliente = await _clienteDataService.GetByIdAsync(request.IdCliente, ct);
             if (cliente == null)
                 errors.Add($"No existe el cliente con id {request.IdCliente}.");
+            else
+            {
+                if (cliente.EsEliminado)
+                    errors.Add($"El cliente con id {request.IdCliente} está eliminado.");
+
+                if (string.Equals(cliente.Estado, "INA", StringComparison.OrdinalIgnoreCase))
+                    errors.Add($"El cliente con id {request.IdCliente} está inactivo.");
+            }
 
             var vehiculo = await _vehiculoDataService.GetByIdAsync(request.IdVehiculo, ct);
             if (vehiculo == null)
                 errors.Add($"No existe el vehículo con id {request.IdVehiculo}.");
+            else
+            {
+                if (vehiculo.EsEliminado)
+                    errors.Add($"El vehículo con id {request.IdVehiculo} está eliminado.");
+
+                if (string.Equals(vehiculo.Estado, "INA", StringComparison.OrdinalIgnoreCase))
+                    errors.Add($"El vehículo con id {request.IdVehiculo} está inactivo.");
+            }
 
             var locRecogida = await _localizacionDataService.GetByIdAsync(request.IdLocalizacionRecogida, ct);
             if (locRecogida == null)
@@ -417,6 +433,18 @@ namespace Booking.Autos.Business.Services
                         var conductorDb = await _conductorDataService.GetByIdAsync(conductor.IdConductor, ct);
                         if (conductorDb == null)
                             errors.Add($"No existe el conductor con id {conductor.IdConductor}.");
+                        else
+                        {
+                            if (conductorDb.FechaVencimientoLicencia <= DateTime.UtcNow.Date)
+                            {
+                                errors.Add($"El conductor {conductor.IdConductor} tiene la licencia vencida.");
+                            }
+
+                            if (string.Equals(conductorDb.Estado, "INA", StringComparison.OrdinalIgnoreCase))
+                            {
+                                errors.Add($"El conductor {conductor.IdConductor} está inactivo.");
+                            }
+                        }
                     }
                     else if (conductor.NuevoConductor == null)
                     {
@@ -495,12 +523,12 @@ namespace Booking.Autos.Business.Services
         {
             var inicio = fechaInicio.Date.Add(horaInicio ?? fechaInicio.TimeOfDay);
             var fin = fechaFin.Date.Add(horaFin ?? fechaFin.TimeOfDay);
-            var duracion = fin - inicio;
 
-            // Ya se valida previamente que inicio < fin, aquí solo dejamos un mínimo defensivo.
-            if (duracion.TotalHours <= 0)
+            // Regla: conteo por duración real en horas, redondeando hacia arriba por día.
+            if (fin <= inicio)
                 return 1;
 
+            var duracion = fin - inicio;
             return (int)Math.Ceiling(duracion.TotalHours / 24d);
         }
     }

@@ -147,8 +147,8 @@ namespace Booking.Autos.Business.Validators
         {
             var errors = new List<string>();
 
-            if (estadoActual == "CAN")
-                errors.Add("La reserva ya está cancelada.");
+            if (estadoActual != "PEN")
+                errors.Add("Solo se pueden cancelar reservas en estado pendiente.");
 
             if (string.IsNullOrWhiteSpace(motivo))
                 errors.Add("El motivo de cancelación es obligatorio.");

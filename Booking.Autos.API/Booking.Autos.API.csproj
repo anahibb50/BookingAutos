@@ -21,4 +21,8 @@
     <ProjectReference Include="..\Booking.Autos.DataManagement\Booking.Autos.DataManagement.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Controllers\V1\Booking\" />
+  </ItemGroup>
+
 </Project>

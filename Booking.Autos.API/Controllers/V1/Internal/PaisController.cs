@@ -6,7 +6,7 @@ using Booking.Autos.Business.DTOs.Catalogos.Pais;
 using Booking.Autos.Business.DTOs.Pais;
 using Booking.Autos.API.Models.Common;
 
-namespace Booking.Autos.API.Controllers.V1
+namespace Booking.Autos.API.Controllers.V1.Internal
 {
     [ApiController]
     [ApiVersion("1.0")]

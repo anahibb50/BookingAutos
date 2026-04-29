@@ -2,21 +2,23 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Booking.Autos.Business.Interfaces;
-using Booking.Autos.Business.DTOs.Catalogos.Categoria;
+using Booking.Autos.Business.DTOs.Catalogos.Marca;
+using Booking.Autos.Business.DTOs.Marca;
 using Booking.Autos.API.Models.Common;
 
-namespace Booking.Autos.API.Controllers.V1.Catalogos
+namespace Booking.Autos.API.Controllers.V1.Internal
 {
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/v1/categorias")]
-    public class CategoriaController : ControllerBase
+    [Route("api/v1/marcas")]
+    [Authorize]
+    public class MarcaController : ControllerBase
     {
-        private readonly ICategoriaService _categoriaService;
+        private readonly IMarcaService _marcaService;
 
-        public CategoriaController(ICategoriaService categoriaService)
+        public MarcaController(IMarcaService marcaService)
         {
-            _categoriaService = categoriaService;
+            _marcaService = marcaService;
         }
 
         // ============================================================
@@ -25,12 +27,15 @@ namespace Booking.Autos.API.Controllers.V1.Catalogos
         [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpPost]
         public async Task<IActionResult> Crear(
-            [FromBody] CrearCategoriaRequest request,
+            [FromBody] CrearMarcaRequest request,
             CancellationToken ct)
         {
-            var result = await _categoriaService.CrearAsync(request, ct);
+            if (request == null)
+                return BadRequest(new ApiErrorResponse("Request inválido"));
 
-            return Ok(ApiResponse<CategoriaResponse>.Ok(result, "Categoría creada"));
+            var result = await _marcaService.CrearAsync(request, ct);
+
+            return Ok(ApiResponse<MarcaResponse>.Ok(result, "Marca creada"));
         }
 
         // ============================================================
@@ -40,14 +45,17 @@ namespace Booking.Autos.API.Controllers.V1.Catalogos
         [HttpPut("{id}")]
         public async Task<IActionResult> Actualizar(
             int id,
-            [FromBody] ActualizarCategoriaRequest request,
+            [FromBody] ActualizarMarcaRequest request,
             CancellationToken ct)
         {
-            request.Id = id; // 🔥 importante
+            if (request == null)
+                return BadRequest(new ApiErrorResponse("Request inválido"));
 
-            var result = await _categoriaService.ActualizarAsync(request, ct);
+            request.Id = id;
 
-            return Ok(ApiResponse<CategoriaResponse>.Ok(result, "Categoría actualizada"));
+            var result = await _marcaService.ActualizarAsync(request, ct);
+
+            return Ok(ApiResponse<MarcaResponse>.Ok(result, "Marca actualizada"));
         }
 
         // ============================================================
@@ -59,12 +67,11 @@ namespace Booking.Autos.API.Controllers.V1.Catalogos
             int id,
             CancellationToken ct)
         {
-            // 🔥 usuario desde JWT (opcional pero PRO)
-            var usuario = User?.Identity?.Name ?? "system";
+            var usuario = User?.Identity?.Name ?? "anonymous";
 
-            await _categoriaService.EliminarLogicoAsync(id, usuario, ct);
+            await _marcaService.EliminarLogicoAsync(id, usuario, ct);
 
-            return Ok(ApiResponse<string>.Ok("OK", "Categoría eliminada"));
+            return Ok(ApiResponse<string>.Ok("OK", "Marca eliminada"));
         }
 
         // ============================================================
@@ -76,9 +83,9 @@ namespace Booking.Autos.API.Controllers.V1.Catalogos
             int id,
             CancellationToken ct)
         {
-            var result = await _categoriaService.ObtenerPorIdAsync(id, ct);
+            var result = await _marcaService.ObtenerPorIdAsync(id, ct);
 
-            return Ok(ApiResponse<CategoriaResponse>.Ok(result));
+            return Ok(ApiResponse<MarcaResponse>.Ok(result));
         }
 
         // ============================================================
@@ -88,13 +95,27 @@ namespace Booking.Autos.API.Controllers.V1.Catalogos
         [HttpGet]
         public async Task<IActionResult> Listar(CancellationToken ct)
         {
-            var result = await _categoriaService.ListarAsync(ct);
+            var result = await _marcaService.ListarAsync(ct);
 
-            return Ok(ApiResponse<IReadOnlyList<CategoriaResponse>>.Ok(result));
+            return Ok(ApiResponse<IReadOnlyList<MarcaResponse>>.Ok(result));
         }
 
         // ============================================================
-        // 🔍 VALIDACIÓN (EXISTE)
+        // 🔍 POR NOMBRE
+        // ============================================================
+        [AllowAnonymous]
+        [HttpGet("por-nombre")]
+        public async Task<IActionResult> ObtenerPorNombre(
+            [FromQuery] string nombre,
+            CancellationToken ct)
+        {
+            var result = await _marcaService.ObtenerPorNombreAsync(nombre, ct);
+
+            return Ok(ApiResponse<MarcaResponse?>.Ok(result));
+        }
+
+        // ============================================================
+        // 🔍 VALIDACIÓN
         // ============================================================
         [Authorize(Roles = "ADMIN,VENDEDOR")]
         [HttpGet("existe")]
@@ -102,7 +123,7 @@ namespace Booking.Autos.API.Controllers.V1.Catalogos
             [FromQuery] string nombre,
             CancellationToken ct)
         {
-            var existe = await _categoriaService.ExistePorNombreAsync(nombre, ct);
+            var existe = await _marcaService.ExistePorNombreAsync(nombre, ct);
 
             return Ok(ApiResponse<bool>.Ok(existe));
         }
